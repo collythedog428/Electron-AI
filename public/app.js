@@ -1,6 +1,7 @@
 // Renderer. Two transports with the same interface:
 //  - desktop window: window.claudeHub (preload bridge, IPC to the main process)
 //  - localhost browser: fetch to /api/* with the per-launch token
+// Chats and the display name are kept in localStorage (never the API key).
 const $ = (id) => document.getElementById(id);
 const modelSel = $("model");
 const logEl = $("log");
@@ -84,13 +85,24 @@ const webBackend = {
 
 const backend = window.claudeHub ? desktopBackend : webBackend;
 
-const history = []; // {role, content} - text only; thinking is never replayed
+const KEYS = { chats: "electron.chats", active: "electron.activeChat", profile: "electron.profile" };
 let controller = null;
 let hasKey = false;
+let chats = [];
+let activeId = null;
 
+// ---------- small helpers ----------
 function flash(message, isError = false) {
   statusEl.textContent = message;
   statusEl.classList.toggle("error", isError);
+}
+
+function busyGuard() {
+  if (controller) {
+    flash("Wait for the reply or press Stop first.", true);
+    return true;
+  }
+  return false;
 }
 
 function addMessage(role, text = "") {
@@ -98,7 +110,7 @@ function addMessage(role, text = "") {
   wrap.className = `msg ${role}`;
   const label = document.createElement("div");
   label.className = "role";
-  label.textContent = role === "user" ? "You" : "Claude";
+  label.textContent = role === "user" ? (getName() || "You") : "Claude";
   const body = document.createElement("div");
   body.className = "body";
   body.textContent = text;
@@ -122,6 +134,126 @@ function addThinking(wrap) {
   return details.querySelector("pre");
 }
 
+// ---------- profile (display name) ----------
+function getName() {
+  try {
+    return (JSON.parse(localStorage.getItem(KEYS.profile)) || {}).name || "";
+  } catch {
+    return "";
+  }
+}
+
+function setName(name) {
+  localStorage.setItem(KEYS.profile, JSON.stringify({ name }));
+  renderProfile();
+}
+
+function renderProfile() {
+  const name = getName();
+  $("user-name").textContent = name || "Set your name";
+  $("avatar").textContent = (name.trim()[0] || "?").toUpperCase();
+  $("profile-name").value = name;
+}
+
+// ---------- chats ----------
+function loadChats() {
+  try {
+    const v = JSON.parse(localStorage.getItem(KEYS.chats));
+    return Array.isArray(v) ? v : [];
+  } catch {
+    return [];
+  }
+}
+
+function persist() {
+  localStorage.setItem(KEYS.chats, JSON.stringify(chats));
+  localStorage.setItem(KEYS.active, activeId ?? "");
+}
+
+function activeChat() {
+  return chats.find((c) => c.id === activeId) ?? null;
+}
+
+function createChat() {
+  const chat = { id: crypto.randomUUID(), title: "New chat", messages: [] };
+  chats.unshift(chat);
+  activeId = chat.id;
+  persist();
+  return chat;
+}
+
+function renderChatList() {
+  const list = $("chat-list");
+  list.replaceChildren();
+  if (chats.length === 0) {
+    const p = document.createElement("p");
+    p.className = "chat-empty";
+    p.textContent = "No chats yet. Start one with New chat.";
+    list.append(p);
+    return;
+  }
+  for (const c of chats) {
+    const li = document.createElement("li");
+    li.className = "chat-item" + (c.id === activeId ? " active" : "");
+    li.dataset.id = c.id;
+    const title = document.createElement("span");
+    title.className = "chat-title";
+    title.textContent = c.title;
+    const del = document.createElement("button");
+    del.type = "button";
+    del.className = "chat-del";
+    del.textContent = "×";
+    del.title = "Delete chat";
+    del.setAttribute("aria-label", `Delete chat ${c.title}`);
+    li.append(title, del);
+    list.append(li);
+  }
+}
+
+function renderWelcome() {
+  const name = getName();
+  const div = document.createElement("div");
+  div.className = "welcome";
+  const h = document.createElement("h3");
+  h.textContent = name ? `Hi ${name}, what's on your mind?` : "What's on your mind?";
+  const p = document.createElement("p");
+  p.textContent = "Pick a model in Settings, then start typing below.";
+  div.append(h, p);
+  logEl.append(div);
+}
+
+function renderMessages() {
+  const chat = activeChat();
+  $("chat-title").textContent = chat ? chat.title : "Chat";
+  logEl.replaceChildren();
+  if (!chat || chat.messages.length === 0) {
+    renderWelcome();
+  } else {
+    for (const m of chat.messages) addMessage(m.role, m.content);
+  }
+}
+
+function selectChat(id) {
+  if (busyGuard()) return;
+  activeId = id;
+  persist();
+  renderChatList();
+  renderMessages();
+  showView("chat");
+}
+
+function deleteChat(id) {
+  if (busyGuard()) return;
+  const chat = chats.find((c) => c.id === id);
+  if (!chat || !confirm(`Delete "${chat.title}"? This cannot be undone.`)) return;
+  chats = chats.filter((c) => c.id !== id);
+  if (activeId === id) activeId = chats[0]?.id ?? null;
+  persist();
+  renderChatList();
+  renderMessages();
+}
+
+// ---------- status, models, key ----------
 async function refreshStatus() {
   try {
     const s = await backend.status();
@@ -134,6 +266,11 @@ async function refreshStatus() {
   } catch (err) {
     $("key-status").textContent = err.message;
   }
+}
+
+function updateBadge() {
+  const opt = modelSel.selectedOptions[0];
+  $("model-badge").textContent = opt ? opt.textContent : "No model";
 }
 
 async function loadModels(force = false) {
@@ -162,6 +299,7 @@ async function loadModels(force = false) {
   }
 }
 
+// ---------- chatting ----------
 function setBusy(busy) {
   sendBtn.disabled = busy;
   stopBtn.hidden = !busy;
@@ -171,11 +309,19 @@ function setBusy(busy) {
 async function send() {
   const text = input.value.trim();
   if (!text || controller) return;
-  if (!hasKey) return flash("Save an API key first.", true);
-  if (!modelSel.value) return flash("Pick a model.", true);
+  if (!hasKey) return flash("Save an API key in Settings first.", true);
+  if (!modelSel.value) return flash("Pick a model in Settings.", true);
 
+  const chat = activeChat() ?? createChat();
+  if (chat.messages.length === 0) logEl.replaceChildren();
   input.value = "";
-  history.push({ role: "user", content: text });
+  chat.messages.push({ role: "user", content: text });
+  if (chat.messages.length === 1) {
+    chat.title = text.replace(/\s+/g, " ").slice(0, 40) || "New chat";
+    $("chat-title").textContent = chat.title;
+  }
+  persist();
+  renderChatList();
   addMessage("user", text);
   const assistant = addMessage("assistant");
   assistant.wrap.classList.add("streaming");
@@ -188,6 +334,11 @@ async function send() {
   let pre = null;
   let stopped = false;
 
+  const failTurn = () => {
+    chat.messages.pop(); // drop the unanswered user turn so history stays valid
+    persist();
+  };
+
   try {
     await backend.chat(
       {
@@ -195,7 +346,7 @@ async function send() {
         system: $("system").value,
         thinking: $("thinking").checked,
         effort: $("effort").value || undefined,
-        messages: history,
+        messages: chat.messages.map((m) => ({ role: m.role, content: m.content })),
       },
       (evt) => {
         if (evt.type === "text") {
@@ -218,9 +369,8 @@ async function send() {
   } catch (err) {
     assistant.wrap.classList.remove("streaming");
     if (err.name !== "AbortError") {
-      // Remove the unanswered user turn so the conversation stays valid.
       if (answer === "") {
-        history.pop();
+        failTurn();
         assistant.wrap.remove();
       }
       flash(err.message, true);
@@ -232,8 +382,9 @@ async function send() {
   }
 
   assistant.wrap.classList.remove("streaming");
-  if (answer) history.push({ role: "assistant", content: answer });
-  else history.pop();
+  if (answer) chat.messages.push({ role: "assistant", content: answer });
+  else failTurn();
+  persist();
 
   if (stopReason === "refusal") flash("The model declined this request (refusal).", true);
   else if (stopReason === "max_tokens") flash("Stopped at the output limit.", true);
@@ -245,7 +396,62 @@ async function send() {
   input.focus();
 }
 
-// ---- wiring ----
+// ---------- first-run setup ----------
+function needsSetup() {
+  return !getName() || !hasKey;
+}
+
+function setupError(message, isError = true) {
+  const el = $("setup-status");
+  el.textContent = message;
+  el.classList.toggle("error", isError);
+}
+
+function openSetup() {
+  $("setup").hidden = false;
+  $("setup-name").value = getName();
+  $("setup-key").required = !hasKey;
+  $("setup-key-hint").textContent = hasKey
+    ? "A key is already saved. Paste a new one only to replace it."
+    : "Stored encrypted on this PC. Create a key in the Anthropic Console.";
+  (getName() ? $("setup-key") : $("setup-name")).focus();
+}
+
+$("setup-form").addEventListener("submit", async (e) => {
+  e.preventDefault();
+  const name = $("setup-name").value.trim();
+  const keyField = $("setup-key");
+  const key = keyField.value.trim();
+  keyField.value = "";
+  if (!name) return setupError("Please enter your name.");
+  if (!hasKey && !key) return setupError("Please paste your API key.");
+
+  const submit = $("setup-submit");
+  submit.disabled = true;
+  setupError("Checking your key…", false);
+  try {
+    if (key) await backend.saveKey(key);
+    await refreshStatus();
+    setName(name);
+    $("setup").hidden = true;
+    await loadModels(true);
+    renderMessages();
+    flash(`Welcome, ${name}.`);
+  } catch (err) {
+    setupError(err.message);
+  } finally {
+    submit.disabled = false;
+  }
+});
+
+// ---------- navigation ----------
+function showView(name) {
+  document.querySelectorAll(".view").forEach((v) => v.classList.toggle("active", v.id === `view-${name}`));
+  $("open-settings").classList.toggle("active", name === "settings");
+  if (name === "chat") input.focus();
+}
+
+// ---------- wiring ----------
 input.addEventListener("keydown", (e) => {
   if (e.key === "Enter" && !e.shiftKey) {
     e.preventDefault();
@@ -258,11 +464,40 @@ $("composer").addEventListener("submit", (e) => {
 });
 stopBtn.addEventListener("click", () => controller?.abort());
 
+$("new-chat").addEventListener("click", () => {
+  if (busyGuard()) return;
+  const current = activeChat();
+  if (!current || current.messages.length > 0) createChat();
+  renderChatList();
+  renderMessages();
+  showView("chat");
+});
+
+$("chat-list").addEventListener("click", (e) => {
+  const li = e.target.closest(".chat-item");
+  if (!li) return;
+  if (e.target.closest(".chat-del")) deleteChat(li.dataset.id);
+  else selectChat(li.dataset.id);
+});
+
+$("open-settings").addEventListener("click", () => showView("settings"));
+
 $("clear").addEventListener("click", () => {
-  if (controller) return;
-  history.length = 0;
-  logEl.replaceChildren();
+  if (busyGuard()) return;
+  const chat = activeChat();
+  if (!chat) return;
+  chat.messages = [];
+  chat.title = "New chat";
+  persist();
+  renderChatList();
+  renderMessages();
   flash("");
+});
+
+$("profile-name").addEventListener("change", (e) => {
+  const name = e.target.value.trim();
+  if (name) setName(name);
+  else e.target.value = getName();
 });
 
 $("key-form").addEventListener("submit", async (e) => {
@@ -299,32 +534,24 @@ modelSel.addEventListener("change", () => {
   updateBadge();
 });
 
-// ---- navigation between Chat and Settings ----
-function showView(name) {
-  document.querySelectorAll(".view").forEach((v) => v.classList.toggle("active", v.id === `view-${name}`));
-  document.querySelectorAll(".nav-item").forEach((b) => {
-    const active = b.dataset.view === name;
-    b.classList.toggle("active", active);
-    if (active) b.setAttribute("aria-current", "page");
-    else b.removeAttribute("aria-current");
-  });
-  if (name === "chat") input.focus();
-}
-document.querySelectorAll(".nav-item").forEach((b) => b.addEventListener("click", () => showView(b.dataset.view)));
-
-function updateBadge() {
-  const opt = modelSel.selectedOptions[0];
-  $("model-badge").textContent = opt ? opt.textContent : "No model";
-}
-
 $("thinking").checked = localStorage.getItem("thinking") === "1";
 $("thinking").addEventListener("change", (e) => localStorage.setItem("thinking", e.target.checked ? "1" : "0"));
 $("effort").value = localStorage.getItem("effort") || "";
 $("effort").addEventListener("change", (e) => localStorage.setItem("effort", e.target.value));
 
+// ---------- boot ----------
 (async () => {
+  renderProfile();
+  chats = loadChats();
+  activeId = localStorage.getItem(KEYS.active) || null;
+  if (!chats.some((c) => c.id === activeId)) activeId = chats[0]?.id ?? null;
+  renderChatList();
+  renderMessages();
+
   await refreshStatus();
+  if (needsSetup()) openSetup();
   await loadModels();
+
   try {
     const access = await backend.localAccess();
     if (window.claudeHub) {

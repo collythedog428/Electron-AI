@@ -9,22 +9,30 @@
 </head>
 <body>
 <div class="app">
-  <nav class="rail" aria-label="Main">
-    <div class="brand" aria-hidden="true">⚡</div>
-    <button class="nav-item active" type="button" data-view="chat" aria-current="page">
-      <span class="icon" aria-hidden="true">💬</span>Chat
-    </button>
-    <button class="nav-item" type="button" data-view="settings">
-      <span class="icon" aria-hidden="true">⚙️</span>Settings
-    </button>
-  </nav>
+  <aside class="sidebar">
+    <div class="brand-row">
+      <span class="brand-mark" aria-hidden="true">⚡</span>
+      <span class="brand-name">Electron</span>
+    </div>
+    <button id="new-chat" class="new-chat" type="button">+ New chat</button>
+    <div class="chat-list-label">Chats</div>
+    <ul id="chat-list" class="chat-list" aria-label="Chats"></ul>
+
+    <div class="sidebar-foot">
+      <div class="me">
+        <span id="avatar" class="avatar" aria-hidden="true">?</span>
+        <span id="user-name" class="user-name">Set your name</span>
+      </div>
+      <button id="open-settings" class="gear" type="button" aria-label="Settings" title="Settings">⚙️</button>
+    </div>
+  </aside>
 
   <div class="views">
     <!-- Chat view -->
     <section id="view-chat" class="view active">
       <header class="chat-head">
         <div>
-          <h2>Chat</h2>
+          <h2 id="chat-title">Chat</h2>
           <span id="model-badge" class="badge">No model</span>
         </div>
         <button id="clear" class="ghost" type="button">Clear conversation</button>
@@ -46,9 +54,17 @@
     <section id="view-settings" class="view">
       <div class="settings-body">
         <h2 class="page-title">Settings</h2>
-        <p class="lead">Choose how Claude replies and manage your API key.</p>
+        <p class="lead">Choose how Claude replies and manage your profile and API key.</p>
 
         <div class="cards">
+          <article class="card">
+            <h3><span class="icon" aria-hidden="true">👤</span>Profile</h3>
+            <div class="field">
+              <label for="profile-name">Your name</label>
+              <input id="profile-name" type="text" maxlength="40" autocomplete="off">
+            </div>
+          </article>
+
           <article class="card">
             <h3><span class="icon" aria-hidden="true">🧠</span>Model</h3>
             <div class="field">
@@ -104,6 +120,29 @@
     </section>
   </div>
 </div>
+
+<!-- First-run setup -->
+<div id="setup" class="setup" hidden role="dialog" aria-modal="true" aria-labelledby="setup-title">
+  <form id="setup-form" class="setup-card">
+    <div class="setup-mark" aria-hidden="true">⚡</div>
+    <h2 id="setup-title">Welcome to Electron</h2>
+    <p class="hint">Two quick things and you're in.</p>
+
+    <div class="field">
+      <label for="setup-name">Your name</label>
+      <input id="setup-name" type="text" maxlength="40" autocomplete="off" required>
+    </div>
+    <div class="field">
+      <label for="setup-key">Anthropic API key</label>
+      <input id="setup-key" type="password" autocomplete="off" spellcheck="false" placeholder="sk-ant-…">
+      <p id="setup-key-hint" class="hint"></p>
+    </div>
+
+    <p id="setup-status" class="small"></p>
+    <button id="setup-submit" type="submit">Get started</button>
+  </form>
+</div>
+
 <script src="app.js" defer></script>
 </body>
 </html>
