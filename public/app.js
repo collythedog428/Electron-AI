@@ -526,10 +526,10 @@ $("setup-form").addEventListener("submit", async (e) => {
   const submit = $("setup-submit");
   submit.disabled = true;
   setupError("Checking your key…", false);
+  setName(name); // save the name straight away, so it's kept even if the key check fails
   try {
     if (key) await backend.saveKey(key);
     await refreshStatus();
-    setName(name);
     $("setup").hidden = true;
     await loadModels(true);
     renderMessages();
