@@ -622,6 +622,108 @@ button.danger:hover:not(:disabled) { background: rgba(255, 92, 108, 0.1); box-sh
   50% { box-shadow: 0 0 0 8px rgba(255, 92, 108, 0); }
 }
 
+/* ---------- Spark, the animated helper ---------- */
+.head-right { display: flex; align-items: center; gap: 14px; }
+.mascot {
+  position: relative;
+  width: 64px;
+  height: 64px;
+  flex: none;
+  cursor: pointer;
+  user-select: none;
+}
+.mascot[hidden] { display: none; }
+.mascot-svg {
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+  filter: drop-shadow(0 8px 14px rgba(124, 92, 255, 0.35));
+}
+.mascot .bubble {
+  position: absolute;
+  right: 74px;
+  top: 10px;
+  max-width: 240px;
+  padding: 8px 12px;
+  font-size: 12px;
+  white-space: nowrap;
+  color: var(--text);
+  background: var(--glass-strong);
+  border: 1px solid var(--border-strong);
+  border-radius: 14px;
+  box-shadow: var(--shadow);
+  opacity: 0;
+  transform: translateY(6px) scale(0.96);
+  transform-origin: right center;
+  transition: opacity 0.25s var(--ease), transform 0.25s var(--ease);
+  pointer-events: none;
+}
+.mascot .bubble.show { opacity: 1; transform: none; }
+
+.m-body, .m-arm, .m-eye { transform-box: fill-box; }
+.m-body { transform-origin: 50% 100%; animation: bob 2.6s ease-in-out infinite; }
+.m-arm-r { transform-origin: 0% 100%; }
+.m-arm-l { transform-origin: 100% 100%; }
+.m-eye { transform-origin: 50% 50%; animation: blink 4.2s infinite; }
+.m-mouth { transition: opacity 0.2s; }
+.m-sad, .m-open { opacity: 0; }
+.m-open { transform-box: fill-box; transform-origin: center; }
+
+.fx { opacity: 0; transition: opacity 0.3s; }
+.fx-dots circle { animation: dot-pulse 1.1s ease-in-out infinite; transform-box: fill-box; transform-origin: center; }
+.fx-dots .d2 { animation-delay: 0.15s; }
+.fx-dots .d3 { animation-delay: 0.3s; }
+.fx-sweat path { transform-box: fill-box; transform-origin: center top; }
+.fx-zzz text { animation: float-z 2.4s ease-in infinite; }
+.fx-zzz text:nth-child(2) { animation-delay: 0.9s; }
+.fx-spark path { transform-box: fill-box; transform-origin: center; animation: twinkle 1.4s ease-in-out infinite; }
+.fx-spark path:nth-child(2) { animation-delay: 0.5s; }
+.fx-waves path { animation: wave-pulse 1s ease-in-out infinite; }
+.fx-waves path:nth-child(n+3) { animation-delay: 0.3s; }
+
+/* Moods */
+.mascot[data-mood="thinking"] .fx-dots { opacity: 1; }
+.mascot[data-mood="thinking"] .m-body { animation-duration: 1.4s; }
+
+.mascot[data-mood="typing"] .m-smile { opacity: 0; }
+.mascot[data-mood="typing"] .m-open { opacity: 1; animation: talk 0.28s ease-in-out infinite alternate; }
+
+.mascot[data-mood="happy"] .m-body { animation: hop 0.7s ease 3; }
+.mascot[data-mood="happy"] .fx-spark { opacity: 1; }
+
+.mascot[data-mood="sad"] .m-body { animation: droop 3s ease-in-out infinite; }
+.mascot[data-mood="sad"] .m-smile { opacity: 0; }
+.mascot[data-mood="sad"] .m-sad { opacity: 1; }
+.mascot[data-mood="sad"] .fx-sweat { opacity: 1; }
+.mascot[data-mood="sad"] .m-eye { animation: none; transform: translateY(2px) scaleY(0.85); }
+
+.mascot[data-mood="listening"] .fx-waves { opacity: 1; }
+.mascot[data-mood="listening"] .m-body { animation: tilt 2s ease-in-out infinite; }
+
+.mascot[data-mood="excited"] .m-body { animation: hop 0.5s ease-in-out infinite alternate; }
+.mascot[data-mood="excited"] .fx-spark { opacity: 1; }
+.mascot[data-mood="excited"] .m-arm-r { animation: wave 0.5s ease-in-out infinite; }
+
+.mascot[data-mood="sleepy"] .m-body { animation: breathe 4s ease-in-out infinite; }
+.mascot[data-mood="sleepy"] .m-eye { animation: none; transform: scaleY(0.08); }
+.mascot[data-mood="sleepy"] .fx-zzz { opacity: 1; }
+
+.mascot[data-mood="wave"] .m-arm-r { animation: wave 0.5s ease-in-out 4; }
+.mascot[data-mood="wave"] .fx-spark { opacity: 1; }
+
+@keyframes bob { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-3px); } }
+@keyframes breathe { 0%, 100% { transform: scale(1, 1); } 50% { transform: scale(1.03, 0.98); } }
+@keyframes blink { 0%, 90%, 100% { transform: scaleY(1); } 94% { transform: scaleY(0.1); } }
+@keyframes hop { 0%, 100% { transform: translateY(0); } 40% { transform: translateY(-9px); } 70% { transform: translateY(0) scaleY(0.94); } }
+@keyframes droop { 0%, 100% { transform: translateY(2px) scaleY(0.96); } 50% { transform: translateY(4px) scaleY(0.92); } }
+@keyframes tilt { 0%, 100% { transform: rotate(-4deg); } 50% { transform: rotate(4deg); } }
+@keyframes talk { from { transform: scaleY(0.6); } to { transform: scaleY(1.2); } }
+@keyframes wave { 0%, 100% { transform: rotate(0deg); } 50% { transform: rotate(-30deg); } }
+@keyframes dot-pulse { 0%, 100% { opacity: 0.25; transform: translateY(0); } 50% { opacity: 1; transform: translateY(-3px); } }
+@keyframes float-z { 0% { opacity: 0; transform: translate(0, 6px); } 40% { opacity: 1; } 100% { opacity: 0; transform: translate(4px, -10px); } }
+@keyframes twinkle { 0%, 100% { opacity: 0.4; transform: scale(0.8); } 50% { opacity: 1; transform: scale(1.15); } }
+@keyframes wave-pulse { 0%, 100% { opacity: 0.25; } 50% { opacity: 1; } }
+
 /* File attachments */
 .attachments {
   display: flex;

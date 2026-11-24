@@ -106,6 +106,7 @@ const DEFAULT_PREFS = {
   motion: "full", // system | full | reduced
   enterSends: true,
   confirmDelete: true,
+  showMascot: true,
 };
 const DEFAULT_MODEL = "claude-haiku-5-5";
 let prefs = loadPrefs();
@@ -137,6 +138,7 @@ function applyPrefs() {
   style.setProperty("--accent-2", accent.accent2);
   style.setProperty("--accent-light", accent.light);
   root.dataset.motion = prefs.motion;
+  $("mascot").hidden = !prefs.showMascot;
 
   input.placeholder = prefs.enterSends
     ? "Message Claude… (Enter to send, Shift+Enter for a new line)"
@@ -172,6 +174,7 @@ function syncPrefControls() {
   $("motion").value = prefs.motion;
   $("enter-sends").checked = prefs.enterSends;
   $("confirm-delete").checked = prefs.confirmDelete;
+  $("show-mascot").checked = prefs.showMascot;
   renderSwatches();
 }
 
@@ -347,6 +350,7 @@ function deleteChat(id) {
   const chat = chats.find((c) => c.id === id);
   if (!chat) return;
   if (prefs.confirmDelete && !confirm(`Delete "${chat.title}"? This cannot be undone.`)) return;
+  Mascot.set("sad", { text: "Bye, chat!", hold: 2500 });
   chats = chats.filter((c) => c.id !== id);
   if (activeId === id) activeId = chats[0]?.id ?? null;
   persist();
@@ -456,6 +460,7 @@ async function addFiles(files) {
       flash(err.message, true);
     }
   }
+  if (pending.length) Mascot.set("happy", { text: "Got the file!", hold: 2500 });
   renderPending();
 }
 
@@ -556,6 +561,7 @@ async function send() {
   controller = new AbortController();
   setBusy(true);
   flash("Streaming…");
+  Mascot.set("thinking");
   let answer = "";
   let stopReason = null;
   let pre = null;
@@ -581,6 +587,7 @@ async function send() {
       },
       (evt) => {
         if (evt.type === "text") {
+          if (!answer) Mascot.set("typing", { line: false });
           answer += evt.text;
           assistant.body.textContent = answer;
           logEl.scrollTop = logEl.scrollHeight;
@@ -605,6 +612,7 @@ async function send() {
         assistant.wrap.remove();
       }
       flash(err.message, true);
+      Mascot.set("sad", { hold: 4000 });
       controller = null;
       setBusy(false);
       return;
@@ -617,6 +625,9 @@ async function send() {
   else failTurn();
   persist();
 
+  if (stopReason === "refusal") Mascot.set("sad", { hold: 4000, text: "That one got declined." });
+  else if (stopped) Mascot.set("idle", { line: false });
+  else Mascot.set("happy", { hold: 3500 });
   if (stopReason === "refusal") flash("The model declined this request (refusal).", true);
   else if (stopReason === "max_tokens") flash("Stopped at the output limit.", true);
   else if (stopped) flash("Stopped.");
@@ -669,6 +680,7 @@ $("setup-form").addEventListener("submit", async (e) => {
     if (key) await backend.saveKey(key);
     await refreshStatus();
     $("setup").hidden = true;
+    Mascot.say(`Welcome, ${name}!`, "wave");
     await loadModels(true);
     renderMessages();
     flash(`Welcome, ${name}.`);
@@ -760,6 +772,7 @@ async function importChats(file) {
   if (imported.length === 0) return chatDataStatus("No valid chats were found in that file.", true);
 
   chats = [...imported, ...chats];
+  Mascot.set("happy", { text: "Chats imported!", hold: 3000 });
   persist();
   renderChatList();
   renderMessages();
@@ -847,6 +860,7 @@ async function finishRecording(chunks, mime) {
   mic.textContent = "🎙️";
   transcribing = true;
   mic.disabled = true;
+  Mascot.set("thinking", { text: "Listening back…" });
   flash("Transcribing…");
   try {
     if (chunks.length === 0) throw new Error("No audio was captured.");
@@ -857,8 +871,10 @@ async function finishRecording(chunks, mime) {
     input.value = input.value.trim() ? `${input.value.trimEnd()} ${text}` : text;
     input.focus();
     flash("Transcribed. Check the text, then send.");
+    Mascot.set("happy", { text: "Got your words!", hold: 3000 });
   } catch (err) {
     flash(err.message, true);
+    Mascot.set("sad", { hold: 3500 });
   } finally {
     transcribing = false;
     mic.disabled = false;
@@ -897,6 +913,7 @@ async function toggleMic() {
   recordingStream = stream;
   rec.start();
   $("mic").classList.add("recording");
+  Mascot.set("listening", { hold: 0 });
   $("mic").textContent = "⏹";
   flash("Listening… click ⏹ when you're done.");
   recordTimer = setTimeout(stopRecording, MAX_RECORDING_MS);
@@ -954,6 +971,7 @@ $("ui-scale").addEventListener("change", (e) => setPref("uiScale", e.target.valu
 $("motion").addEventListener("change", (e) => setPref("motion", e.target.value));
 $("enter-sends").addEventListener("change", (e) => setPref("enterSends", e.target.checked));
 $("confirm-delete").addEventListener("change", (e) => setPref("confirmDelete", e.target.checked));
+$("show-mascot").addEventListener("change", (e) => setPref("showMascot", e.target.checked));
 $("reset-prefs").addEventListener("click", () => {
   prefs = { ...DEFAULT_PREFS };
   savePrefs();
@@ -969,6 +987,7 @@ stopBtn.addEventListener("click", () => controller?.abort());
 
 $("new-chat").addEventListener("click", () => {
   if (busyGuard()) return;
+  Mascot.set("excited", { hold: 3000 });
   const current = activeChat();
   if (!current || current.messages.length > 0) createChat();
   renderChatList();
@@ -1072,6 +1091,7 @@ $("effort").addEventListener("change", (e) => localStorage.setItem("effort", e.t
   if (!getName() && legacyName) setName(legacyName);
   await refreshSpeech();
   if (needsSetup()) openSetup();
+  else Mascot.say(getName() ? `Hi ${getName()}!` : "Hi there!", "wave");
   await loadModels();
 
   try {
