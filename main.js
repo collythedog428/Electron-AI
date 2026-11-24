@@ -10,6 +10,10 @@ const HERE = path.dirname(fileURLToPath(import.meta.url));
 const PUBLIC_DIR = path.join(HERE, "public");
 const LOCAL_PORT = Number(process.env.CLAUDE_HUB_PORT) || 4317;
 
+// One fixed data folder for every run (dev `electron .` and the packaged .exe),
+// so the saved key, name and chats are always found again.
+app.setPath("userData", path.join(app.getPath("appData"), "Electron"));
+
 if (!app.requestSingleInstanceLock()) {
   app.quit();
 }
