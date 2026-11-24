@@ -626,8 +626,8 @@ button.danger:hover:not(:disabled) { background: rgba(255, 92, 108, 0.1); box-sh
 .head-right { display: flex; align-items: center; gap: 14px; }
 .mascot {
   position: relative;
-  width: 64px;
-  height: 64px;
+  width: 60px;
+  height: 80px;
   flex: none;
   cursor: pointer;
   user-select: none;
@@ -642,8 +642,13 @@ button.danger:hover:not(:disabled) { background: rgba(255, 92, 108, 0.1); box-sh
 
 .m-body, .m-arm, .m-eye { transform-box: fill-box; }
 .m-body { transform-origin: 50% 100%; animation: bob 2.6s ease-in-out infinite; }
-.m-arm-r { transform-origin: 0% 100%; }
-.m-arm-l { transform-origin: 100% 100%; }
+.m-arm-r { transform-origin: 0% 0%; }
+.m-arm-l { transform-origin: 100% 0%; }
+.m-leg, .m-foot { transform-box: fill-box; }
+.m-leg { transform-origin: 50% 0%; }
+.prop { opacity: 0; transition: opacity 0.3s; }
+.prop-steam { transform-box: fill-box; transform-origin: center bottom; }
+.ball { transform-box: fill-box; transform-origin: center; }
 .m-eye { transform-origin: 50% 50%; animation: blink 4.2s infinite; }
 .m-mouth { transition: opacity 0.2s; }
 .m-sad, .m-open { opacity: 0; }
@@ -690,6 +695,53 @@ button.danger:hover:not(:disabled) { background: rgba(255, 92, 108, 0.1); box-sh
 
 .mascot[data-mood="wave"] .m-arm-r { animation: wave 0.5s ease-in-out 4; }
 .mascot[data-mood="wave"] .fx-spark { opacity: 1; }
+
+/* Loading tasks: while Spark is thinking, it picks one of these at random and switches every few seconds */
+.mascot[data-mood="thinking"][data-task="pace"] .m-leg-l { animation: step 0.6s ease-in-out infinite; }
+.mascot[data-mood="thinking"][data-task="pace"] .m-leg-r { animation: step 0.6s ease-in-out infinite reverse; }
+.mascot[data-mood="thinking"][data-task="pace"] .m-body { animation: sway 1.2s ease-in-out infinite; }
+
+.mascot[data-mood="thinking"][data-task="juggle"] .m-arm-l { animation: juggle-l 0.9s ease-in-out infinite; }
+.mascot[data-mood="thinking"][data-task="juggle"] .m-arm-r { animation: juggle-r 0.9s ease-in-out infinite; }
+.mascot[data-mood="thinking"][data-task="juggle"] .prop-balls { opacity: 1; }
+.mascot[data-mood="thinking"][data-task="juggle"] .b1 { animation: ball 0.9s ease-in-out infinite; }
+.mascot[data-mood="thinking"][data-task="juggle"] .b2 { animation: ball 0.9s ease-in-out 0.3s infinite; }
+.mascot[data-mood="thinking"][data-task="juggle"] .b3 { animation: ball 0.9s ease-in-out 0.6s infinite; }
+
+.mascot[data-mood="thinking"][data-task="stretch"] .m-body { animation: stretch 2.2s ease-in-out infinite; }
+.mascot[data-mood="thinking"][data-task="stretch"] .m-arm-l { animation: arm-up-l 2.2s ease-in-out infinite; }
+.mascot[data-mood="thinking"][data-task="stretch"] .m-arm-r { animation: arm-up-r 2.2s ease-in-out infinite; }
+
+.mascot[data-mood="thinking"][data-task="read"] .prop-book { opacity: 1; }
+.mascot[data-mood="thinking"][data-task="read"] .prop-book { animation: page 1.6s ease-in-out infinite; }
+.mascot[data-mood="thinking"][data-task="read"] .m-eye { animation: look 2.4s ease-in-out infinite; }
+
+.mascot[data-mood="thinking"][data-task="coffee"] .prop-cup { opacity: 1; }
+.mascot[data-mood="thinking"][data-task="coffee"] .m-arm-r { animation: sip 3s ease-in-out infinite; }
+.mascot[data-mood="thinking"][data-task="coffee"] .prop-steam { animation: steam 1.6s ease-out infinite; }
+
+.mascot[data-mood="thinking"][data-task="paint"] .prop-brush { opacity: 1; }
+.mascot[data-mood="thinking"][data-task="paint"] .m-arm-r { animation: paint 0.5s ease-in-out infinite alternate; }
+.mascot[data-mood="thinking"][data-task="paint"] .prop-brush { animation: paint 0.5s ease-in-out infinite alternate; }
+
+.mascot[data-mood="thinking"][data-task="hop"] .m-body { animation: hop 0.6s ease-in-out infinite; }
+
+.mascot[data-mood="thinking"][data-task="spin"] .m-body { transform-origin: 50% 55%; animation: spin 1.4s linear infinite; }
+
+@keyframes step { 0%, 100% { transform: rotate(-14deg); } 50% { transform: rotate(14deg); } }
+@keyframes sway { 0%, 100% { transform: translateX(-3px); } 50% { transform: translateX(3px); } }
+@keyframes juggle-l { 0%, 100% { transform: rotate(-35deg); } 50% { transform: rotate(35deg); } }
+@keyframes juggle-r { 0%, 100% { transform: rotate(35deg); } 50% { transform: rotate(-35deg); } }
+@keyframes ball { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-16px); } }
+@keyframes stretch { 0%, 100% { transform: scale(1, 1); } 50% { transform: scale(1.03, 1.08); } }
+@keyframes arm-up-l { 0%, 100% { transform: rotate(0deg); } 50% { transform: rotate(-150deg); } }
+@keyframes arm-up-r { 0%, 100% { transform: rotate(0deg); } 50% { transform: rotate(150deg); } }
+@keyframes page { 0%, 100% { transform: scaleX(1); } 50% { transform: scaleX(0.85); } }
+@keyframes look { 0%, 100% { transform: translateX(-2px); } 50% { transform: translateX(2px); } }
+@keyframes sip { 0%, 60%, 100% { transform: rotate(0deg); } 30% { transform: rotate(-55deg); } }
+@keyframes steam { 0% { opacity: 0; transform: translateY(4px); } 50% { opacity: 1; } 100% { opacity: 0; transform: translateY(-8px); } }
+@keyframes paint { 0% { transform: rotate(0deg); } 100% { transform: rotate(-25deg); } }
+@keyframes spin { to { transform: rotate(360deg); } }
 
 @keyframes bob { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-3px); } }
 @keyframes breathe { 0%, 100% { transform: scale(1, 1); } 50% { transform: scale(1.03, 0.98); } }

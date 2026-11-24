@@ -37,43 +37,69 @@
         </div>
         <div class="head-right">
           <div id="mascot" class="mascot" data-mood="idle" role="button" tabindex="-1" aria-label="Spark, your helper" title="Say hi to Spark">
-            <svg class="mascot-svg" viewBox="0 0 120 120" aria-hidden="true">
+            <svg class="mascot-svg" viewBox="0 0 120 160" aria-hidden="true">
               <defs>
                 <linearGradient id="mascot-body" x1="0" y1="0" x2="1" y2="1">
                   <stop offset="0" stop-color="#c4b5ff"/>
                   <stop offset="1" stop-color="#7c5cff"/>
                 </linearGradient>
               </defs>
-              <path class="m-arm m-arm-l" d="M24 70 Q10 66 14 52" fill="none" stroke="#7c5cff" stroke-width="7" stroke-linecap="round"/>
-              <path class="m-arm m-arm-r" d="M96 70 Q110 66 106 50" fill="none" stroke="#7c5cff" stroke-width="7" stroke-linecap="round"/>
               <g class="m-body">
-                <ellipse cx="60" cy="64" rx="40" ry="42" fill="url(#mascot-body)"/>
-                <ellipse cx="46" cy="50" rx="10" ry="6" fill="#fff" opacity=".22"/>
-                <g class="m-eyes">
-                  <ellipse class="m-eye" cx="46" cy="60" rx="6" ry="7.5" fill="#1a1530"/>
-                  <ellipse class="m-eye" cx="74" cy="60" rx="6" ry="7.5" fill="#1a1530"/>
+                <g class="m-legs">
+                  <path class="m-leg m-leg-l" d="M48 110 L44 140" fill="none" stroke="#5b3fd6" stroke-width="9" stroke-linecap="round"/>
+                  <path class="m-leg m-leg-r" d="M72 110 L76 140" fill="none" stroke="#5b3fd6" stroke-width="9" stroke-linecap="round"/>
+                  <ellipse class="m-foot m-foot-l" cx="40" cy="144" rx="9" ry="5" fill="#1a1530"/>
+                  <ellipse class="m-foot m-foot-r" cx="80" cy="144" rx="9" ry="5" fill="#1a1530"/>
                 </g>
-                <circle cx="36" cy="72" r="5" fill="#ff8a95" opacity=".4"/>
-                <circle cx="84" cy="72" r="5" fill="#ff8a95" opacity=".4"/>
-                <path class="m-mouth m-smile" d="M49 76 Q60 86 71 76" fill="none" stroke="#1a1530" stroke-width="4" stroke-linecap="round"/>
-                <path class="m-mouth m-sad" d="M49 84 Q60 74 71 84" fill="none" stroke="#1a1530" stroke-width="4" stroke-linecap="round"/>
-                <ellipse class="m-mouth m-open" cx="60" cy="81" rx="6" ry="5" fill="#1a1530"/>
+                <path class="m-arm m-arm-l" d="M36 92 Q24 102 28 116" fill="none" stroke="#7c5cff" stroke-width="8" stroke-linecap="round"/>
+                <path class="m-arm m-arm-r" d="M84 92 Q96 102 92 116" fill="none" stroke="#7c5cff" stroke-width="8" stroke-linecap="round"/>
+                <rect class="m-torso" x="34" y="88" width="52" height="36" rx="16" fill="url(#mascot-body)"/>
+                <g class="m-head">
+                  <ellipse cx="60" cy="48" rx="38" ry="38" fill="url(#mascot-body)"/>
+                  <ellipse cx="46" cy="36" rx="10" ry="6" fill="#fff" opacity=".22"/>
+                  <g class="m-eyes">
+                    <ellipse class="m-eye" cx="46" cy="50" rx="6" ry="7.5" fill="#1a1530"/>
+                    <ellipse class="m-eye" cx="74" cy="50" rx="6" ry="7.5" fill="#1a1530"/>
+                  </g>
+                  <circle cx="36" cy="62" r="5" fill="#ff8a95" opacity=".4"/>
+                  <circle cx="84" cy="62" r="5" fill="#ff8a95" opacity=".4"/>
+                  <path class="m-mouth m-smile" d="M49 66 Q60 76 71 66" fill="none" stroke="#1a1530" stroke-width="4" stroke-linecap="round"/>
+                  <path class="m-mouth m-sad" d="M49 74 Q60 64 71 74" fill="none" stroke="#1a1530" stroke-width="4" stroke-linecap="round"/>
+                  <ellipse class="m-mouth m-open" cx="60" cy="71" rx="6" ry="5" fill="#1a1530"/>
+                </g>
+                <g class="prop prop-book">
+                  <rect x="44" y="104" width="32" height="22" rx="3" fill="#fde68a" stroke="#b45309" stroke-width="2"/>
+                  <line x1="60" y1="104" x2="60" y2="126" stroke="#b45309" stroke-width="2"/>
+                </g>
+                <g class="prop prop-cup">
+                  <path d="M92 118 h14 v10 q0 8 -7 8 h-0 q-7 0 -7 -8z" fill="#f8fafc" stroke="#94a3b8" stroke-width="2"/>
+                  <path class="prop-steam" d="M96 114 q-4 -6 0 -10 q4 -4 0 -10" fill="none" stroke="#cbd5e1" stroke-width="2" stroke-linecap="round"/>
+                </g>
+                <g class="prop prop-brush">
+                  <rect x="94" y="72" width="4" height="22" rx="2" fill="#92400e" transform="rotate(25 96 83)"/>
+                  <circle cx="103" cy="68" r="4" fill="#f472b6"/>
+                </g>
+                <g class="prop prop-balls">
+                  <circle class="ball b1" cx="24" cy="30" r="6" fill="#f87171"/>
+                  <circle class="ball b2" cx="60" cy="0" r="6" fill="#fbbf24"/>
+                  <circle class="ball b3" cx="96" cy="30" r="6" fill="#34d399"/>
+                </g>
               </g>
-              <g class="fx fx-sweat"><path d="M96 42 q5 9 0 13 q-5 -4 0 -13z" fill="#7dd3fc"/></g>
+              <g class="fx fx-sweat"><path d="M96 34 q5 9 0 13 q-5 -4 0 -13z" fill="#7dd3fc"/></g>
               <g class="fx fx-dots" fill="#c4b5ff">
-                <circle class="d1" cx="44" cy="18" r="3.5"/><circle class="d2" cx="60" cy="18" r="3.5"/><circle class="d3" cx="76" cy="18" r="3.5"/>
+                <circle class="d1" cx="44" cy="2" r="3.5"/><circle class="d2" cx="60" cy="2" r="3.5"/><circle class="d3" cx="76" cy="2" r="3.5"/>
               </g>
               <g class="fx fx-zzz" fill="#c4b5ff" font-weight="800" font-family="Segoe UI, sans-serif">
-                <text x="92" y="30" font-size="13">z</text>
-                <text x="100" y="18" font-size="10">z</text>
+                <text x="92" y="22" font-size="13">z</text>
+                <text x="100" y="10" font-size="10">z</text>
               </g>
               <g class="fx fx-spark" fill="#ffd166">
-                <path d="M16 22 l2 6 6 2 -6 2 -2 6 -2 -6 -6 -2 6 -2z"/>
-                <path d="M104 24 l1.5 4.5 4.5 1.5 -4.5 1.5 -1.5 4.5 -1.5 -4.5 -4.5 -1.5 4.5 -1.5z"/>
+                <path d="M14 14 l2 6 6 2 -6 2 -2 6 -2 -6 -6 -2 6 -2z"/>
+                <path d="M106 16 l1.5 4.5 4.5 1.5 -4.5 1.5 -1.5 4.5 -1.5 -4.5 -4.5 -1.5 4.5 -1.5z"/>
               </g>
               <g class="fx fx-waves" fill="none" stroke="#c4b5ff" stroke-width="3" stroke-linecap="round">
-                <path d="M12 46 q-6 8 0 16"/><path d="M4 42 q-10 12 0 24"/>
-                <path d="M108 46 q6 8 0 16"/><path d="M116 42 q10 12 0 24"/>
+                <path d="M12 44 q-6 8 0 16"/><path d="M4 40 q-10 12 0 24"/>
+                <path d="M108 44 q6 8 0 16"/><path d="M116 40 q10 12 0 24"/>
               </g>
             </svg>
           </div>

@@ -207,7 +207,7 @@ function addMessage(role, text = "", attachments = []) {
   wrap.className = `msg ${role}`;
   const label = document.createElement("div");
   label.className = "role";
-  label.textContent = role === "user" ? (getName() || "You") : "Claude";
+  label.textContent = role === "user" ? (getName() || "You") : "Spark";
   const body = document.createElement("div");
   body.className = "body";
   body.textContent = text;
