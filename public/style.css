@@ -726,7 +726,7 @@ button.danger:hover:not(:disabled) { background: rgba(255, 92, 108, 0.1); box-sh
 
 .mascot[data-mood="thinking"][data-task="hop"] .m-body { animation: hop 0.6s ease-in-out infinite; }
 
-.mascot[data-mood="thinking"][data-task="spin"] .m-body { transform-origin: 50% 55%; animation: spin 1.4s linear infinite; }
+.mascot[data-mood="thinking"][data-task="wiggle"] .m-body { animation: wiggle 1.6s ease-in-out infinite; }
 
 @keyframes step { 0%, 100% { transform: rotate(-14deg); } 50% { transform: rotate(14deg); } }
 @keyframes sway { 0%, 100% { transform: translateX(-3px); } 50% { transform: translateX(3px); } }
@@ -741,7 +741,7 @@ button.danger:hover:not(:disabled) { background: rgba(255, 92, 108, 0.1); box-sh
 @keyframes sip { 0%, 60%, 100% { transform: rotate(0deg); } 30% { transform: rotate(-55deg); } }
 @keyframes steam { 0% { opacity: 0; transform: translateY(4px); } 50% { opacity: 1; } 100% { opacity: 0; transform: translateY(-8px); } }
 @keyframes paint { 0% { transform: rotate(0deg); } 100% { transform: rotate(-25deg); } }
-@keyframes spin { to { transform: rotate(360deg); } }
+@keyframes wiggle { 0%, 100% { transform: rotate(-6deg); } 50% { transform: rotate(6deg); } }
 
 @keyframes bob { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-3px); } }
 @keyframes breathe { 0%, 100% { transform: scale(1, 1); } 50% { transform: scale(1.03, 0.98); } }

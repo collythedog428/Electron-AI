@@ -2,7 +2,7 @@
 // app.js sets the mood as things happen (sending, replies, errors, the mic and so on).
 const Mascot = (() => {
   const root = document.getElementById("mascot");
-  const LOADING_TASKS = ["pace", "juggle", "stretch", "read", "coffee", "paint", "hop", "spin"];
+  const LOADING_TASKS = ["pace", "juggle", "stretch", "read", "coffee", "paint", "hop", "wiggle"];
   let moodTimer = null;
   let sleepTimer = null;
   let taskTimer = null;
