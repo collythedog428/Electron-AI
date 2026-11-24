@@ -540,6 +540,13 @@ $("setup-form").addEventListener("submit", async (e) => {
   }
 });
 
+// TEMP: testing only. Hides the setup screen without saving anything.
+// Remove this handler and the #setup-skip button in index.html when testing is done.
+$("setup-skip").addEventListener("click", () => {
+  $("setup").hidden = true;
+  flash("Setup skipped (testing mode). Nothing was saved.");
+});
+
 // ---------- navigation ----------
 function showView(name) {
   document.querySelectorAll(".view").forEach((v) => v.classList.toggle("active", v.id === `view-${name}`));
