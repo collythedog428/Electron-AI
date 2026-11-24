@@ -60,7 +60,7 @@ test("status reports no key on a fresh store", async () => {
   try {
     const hub = new Hub({ keyStore: store, clientFactory: () => fakeClient() });
     await hub.init();
-    assert.deepEqual(hub.status(), { hasKey: false, hint: null, storageAvailable: true, loadError: null });
+    assert.deepEqual(hub.status(), { name: "", hasKey: false, hint: null, storageAvailable: true, loadError: null });
   } finally {
     await rm(dir, { recursive: true, force: true });
   }

@@ -24,6 +24,7 @@ const hub = new Hub({
     file: path.join(app.getPath("userData"), "api-key.bin"),
     crypto: safeStorage,
   }),
+  profileFile: path.join(app.getPath("userData"), "profile.json"),
 });
 
 const speech = new SpeechService({ dir: path.join(app.getPath("userData"), "whisper") });
@@ -51,6 +52,7 @@ function handle(channel, fn) {
 handle("hub:status", () => hub.status());
 handle("hub:saveKey", (_e, apiKey) => hub.saveKey(apiKey));
 handle("hub:deleteKey", () => hub.deleteKey());
+handle("hub:setName", (_e, name) => hub.setName(name));
 handle("hub:models", (_e, force) => hub.models(force === true));
 handle("app:localAccess", () => localAccess);
 

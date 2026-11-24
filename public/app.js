@@ -14,6 +14,7 @@ const desktopBackend = {
   status: () => window.claudeHub.status(),
   saveKey: (key) => window.claudeHub.saveKey(key),
   deleteKey: () => window.claudeHub.deleteKey(),
+  setName: (name) => window.claudeHub.setName(name),
   models: (force) => window.claudeHub.models(force),
   localAccess: () => window.claudeHub.localAccess(),
   async chat(body, onEvent, signal) {
@@ -52,6 +53,7 @@ const webBackend = {
   status: () => httpApi("/api/status"),
   saveKey: (apiKey) => httpApi("/api/key", { method: "POST", body: { apiKey } }),
   deleteKey: () => httpApi("/api/key", { method: "DELETE" }),
+  setName: (name) => httpApi("/api/profile", { method: "POST", body: { name } }),
   models: (force) => httpApi(`/api/models${force ? "?refresh=1" : ""}`),
   localAccess: async () => ({ url: location.origin, error: null }),
   async chat(body, onEvent, signal) {
@@ -234,17 +236,16 @@ function addThinking(wrap) {
 }
 
 // ---------- profile (display name) ----------
+// The name lives in the app's data folder, so the desktop window and localhost see the same one.
+let profileName = "";
 function getName() {
-  try {
-    return (JSON.parse(localStorage.getItem(KEYS.profile)) || {}).name || "";
-  } catch {
-    return "";
-  }
+  return profileName;
 }
 
 function setName(name) {
-  localStorage.setItem(KEYS.profile, JSON.stringify({ name }));
+  profileName = name;
   renderProfile();
+  backend.setName(name).catch((err) => flash(err.message, true));
 }
 
 function renderProfile() {
@@ -358,6 +359,8 @@ async function refreshStatus() {
   try {
     const s = await backend.status();
     hasKey = s.hasKey;
+    profileName = s.name ?? "";
+    renderProfile();
     let text = s.hasKey ? `Stored key: ${s.hint}` : "No key saved yet.";
     if (!s.storageAvailable) text += " Secure storage is unavailable on this system.";
     if (s.loadError) text += ` Could not unlock saved key (${s.loadError}).`;
@@ -1059,6 +1062,14 @@ $("effort").addEventListener("change", (e) => localStorage.setItem("effort", e.t
   renderMessages();
 
   await refreshStatus();
+  // One-time move: a name saved by an older version in this browser's storage goes to the app.
+  let legacyName = "";
+  try {
+    legacyName = (JSON.parse(localStorage.getItem(KEYS.profile)) || {}).name || "";
+  } catch {
+    legacyName = "";
+  }
+  if (!getName() && legacyName) setName(legacyName);
   await refreshSpeech();
   if (needsSetup()) openSetup();
   await loadModels();
