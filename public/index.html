@@ -112,6 +112,60 @@
           </article>
 
           <article class="card">
+            <h3><span class="icon" aria-hidden="true">🎨</span>Appearance</h3>
+            <div class="field">
+              <label for="bg-style">Background</label>
+              <select id="bg-style">
+                <option value="dots-glow">Dots and glow</option>
+                <option value="dots">Dots only</option>
+                <option value="glow">Glow only</option>
+                <option value="plain">Plain</option>
+              </select>
+            </div>
+            <div class="field">
+              <label for="dot-size">Dot size</label>
+              <select id="dot-size">
+                <option value="16">Small</option>
+                <option value="22">Medium</option>
+                <option value="32">Large</option>
+              </select>
+            </div>
+            <div class="field">
+              <label for="dot-strength">Dot strength</label>
+              <input id="dot-strength" type="range" min="0" max="100" step="5">
+            </div>
+            <div class="field">
+              <label>Accent colour</label>
+              <div id="accent-swatches" class="swatches" role="group" aria-label="Accent colour"></div>
+            </div>
+            <div class="field">
+              <label for="ui-scale">Text size</label>
+              <select id="ui-scale">
+                <option value="0.92">Small</option>
+                <option value="1">Medium</option>
+                <option value="1.12">Large</option>
+              </select>
+            </div>
+            <div class="field">
+              <label for="motion">Animations</label>
+              <select id="motion">
+                <option value="system">Follow Windows setting</option>
+                <option value="full">Always on</option>
+                <option value="reduced">Reduced</option>
+              </select>
+            </div>
+          </article>
+
+          <article class="card">
+            <h3><span class="icon" aria-hidden="true">🧩</span>App behaviour</h3>
+            <label class="check"><input type="checkbox" id="enter-sends"> Press Enter to send (Shift+Enter for a new line)</label>
+            <label class="check"><input type="checkbox" id="confirm-delete"> Ask before deleting a chat</label>
+            <div class="row">
+              <button id="reset-prefs" class="ghost" type="button">Reset appearance and behaviour</button>
+            </div>
+          </article>
+
+          <article class="card">
             <h3><span class="icon" aria-hidden="true">🌐</span>Browser access</h3>
             <p id="local-access" class="hint"></p>
           </article>

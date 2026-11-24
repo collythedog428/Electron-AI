@@ -2,8 +2,14 @@
 :root {
   color-scheme: dark;
   --bg: #0b0d12;
-  --bg-glow-1: rgba(124, 92, 255, 0.18);
-  --bg-glow-2: rgba(217, 119, 87, 0.14);
+  /* Appearance — set from Settings (see app.js applyPrefs) */
+  --bg-glow-1: color-mix(in srgb, var(--accent) 18%, transparent);
+  --bg-glow-2: color-mix(in srgb, var(--accent-2) 14%, transparent);
+  --accent-light: #a77cff;
+  --dot-alpha: 0.09;
+  --dot-size: 22px;
+  --glow-opacity: 1;
+  --ui-scale: 1;
   --glass: rgba(24, 27, 36, 0.72);
   --glass-strong: rgba(32, 36, 48, 0.9);
   --panel: #161a23;
@@ -29,10 +35,12 @@ html, body {
   margin: 0;
   height: 100%;
   background-color: var(--bg);
-  background-image: radial-gradient(rgba(255, 255, 255, 0.09) 1px, transparent 1.4px);
-  background-size: 22px 22px;
+  background-image: radial-gradient(rgba(255, 255, 255, var(--dot-alpha)) 1px, transparent 1.4px);
+  background-size: var(--dot-size) var(--dot-size);
   color: var(--text);
-  font: 14px/1.55 "Segoe UI Variable", "Segoe UI", system-ui, sans-serif;
+  font-family: "Segoe UI Variable", "Segoe UI", system-ui, sans-serif;
+  font-size: calc(14px * var(--ui-scale));
+  line-height: 1.55;
   -webkit-font-smoothing: antialiased;
 }
 
@@ -47,6 +55,7 @@ body::after {
   filter: blur(90px);
   pointer-events: none;
   z-index: 0;
+  opacity: var(--glow-opacity);
   animation: drift 26s ease-in-out infinite alternate;
 }
 body::before { background: var(--bg-glow-1); top: -25vmax; left: -15vmax; }
@@ -472,7 +481,7 @@ textarea { resize: vertical; }
 button {
   position: relative;
   overflow: hidden;
-  background: linear-gradient(135deg, var(--accent), #a77cff);
+  background: linear-gradient(135deg, var(--accent), var(--accent-light));
   color: var(--accent-text);
   border: 0;
   border-radius: 10px;
@@ -565,11 +574,41 @@ button.danger:hover:not(:disabled) { background: rgba(255, 92, 108, 0.1); box-sh
 /* Thin, quiet scrollbars */
 * { scrollbar-width: thin; scrollbar-color: rgba(255,255,255,.15) transparent; }
 
+/* Motion: "system" follows Windows, "reduced" always on, "full" always on for animations */
 @media (prefers-reduced-motion: reduce) {
-  *, *::before, *::after {
+  html:not([data-motion="full"]) *, html:not([data-motion="full"]) *::before, html:not([data-motion="full"]) *::after {
     animation-duration: 0.001ms !important;
     animation-iteration-count: 1 !important;
     transition-duration: 0.001ms !important;
     scroll-behavior: auto !important;
   }
 }
+html[data-motion="reduced"] *, html[data-motion="reduced"] *::before, html[data-motion="reduced"] *::after {
+  animation-duration: 0.001ms !important;
+  animation-iteration-count: 1 !important;
+  transition-duration: 0.001ms !important;
+  scroll-behavior: auto !important;
+}
+
+/* ---------- Appearance & behaviour cards ---------- */
+.pref-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+.pref-row > span { font-size: 13px; color: var(--text); }
+.pref-row select { width: auto; min-width: 150px; }
+.swatches { display: flex; gap: 8px; flex-wrap: wrap; }
+.swatch {
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border-radius: 50%;
+  border: 2px solid transparent;
+  box-shadow: none;
+  background: var(--sw);
+}
+.swatch:hover:not(:disabled) { transform: scale(1.08); box-shadow: none; filter: none; }
+.swatch[aria-pressed="true"] { border-color: #fff; box-shadow: 0 0 0 3px color-mix(in srgb, var(--sw) 45%, transparent); }
+.toggle-line { display: flex; align-items: center; justify-content: space-between; font-size: 13px; color: var(--text); gap: 12px; }

@@ -85,7 +85,98 @@ const webBackend = {
 
 const backend = window.claudeHub ? desktopBackend : webBackend;
 
-const KEYS = { chats: "electron.chats", active: "electron.activeChat", profile: "electron.profile" };
+const KEYS = { chats: "electron.chats", active: "electron.activeChat", profile: "electron.profile", prefs: "electron.prefs" };
+
+// ---------- appearance & behaviour preferences ----------
+const ACCENTS = {
+  violet: { label: "Violet", accent: "#7c5cff", accent2: "#d97757", light: "#a77cff" },
+  ocean: { label: "Ocean", accent: "#2a9df4", accent2: "#34d399", light: "#67c3ff" },
+  rose: { label: "Rose", accent: "#f43f5e", accent2: "#fb923c", light: "#ff7d94" },
+  mint: { label: "Mint", accent: "#10b981", accent2: "#22d3ee", light: "#5ee0bb" },
+  amber: { label: "Amber", accent: "#f59e0b", accent2: "#ef4444", light: "#ffc247" },
+};
+const DEFAULT_PREFS = {
+  bg: "dots-glow", // dots-glow | dots | glow | plain
+  dotSize: "22",
+  dotStrength: 50, // 0-100
+  accent: "violet",
+  uiScale: "1",
+  motion: "system", // system | full | reduced
+  enterSends: true,
+  confirmDelete: true,
+};
+let prefs = loadPrefs();
+
+function loadPrefs() {
+  try {
+    return { ...DEFAULT_PREFS, ...(JSON.parse(localStorage.getItem(KEYS.prefs)) || {}) };
+  } catch {
+    return { ...DEFAULT_PREFS };
+  }
+}
+
+function savePrefs() {
+  localStorage.setItem(KEYS.prefs, JSON.stringify(prefs));
+}
+
+function applyPrefs() {
+  const root = document.documentElement;
+  const style = root.style;
+  const showDots = prefs.bg === "dots-glow" || prefs.bg === "dots";
+  const showGlow = prefs.bg === "dots-glow" || prefs.bg === "glow";
+  const accent = ACCENTS[prefs.accent] ?? ACCENTS.violet;
+
+  style.setProperty("--dot-alpha", showDots ? String((prefs.dotStrength / 100) * 0.2) : "0");
+  style.setProperty("--dot-size", `${prefs.dotSize}px`);
+  style.setProperty("--glow-opacity", showGlow ? "1" : "0");
+  style.setProperty("--ui-scale", prefs.uiScale);
+  style.setProperty("--accent", accent.accent);
+  style.setProperty("--accent-2", accent.accent2);
+  style.setProperty("--accent-light", accent.light);
+  root.dataset.motion = prefs.motion;
+
+  input.placeholder = prefs.enterSends
+    ? "Message Claude… (Enter to send, Shift+Enter for a new line)"
+    : "Message Claude… (Ctrl+Enter to send, Enter for a new line)";
+}
+
+function renderSwatches() {
+  const wrap = $("accent-swatches");
+  wrap.replaceChildren();
+  for (const [key, a] of Object.entries(ACCENTS)) {
+    const b = document.createElement("button");
+    b.type = "button";
+    b.className = "swatch";
+    b.title = a.label;
+    b.setAttribute("aria-label", `${a.label} accent`);
+    b.style.setProperty("--sw", a.accent);
+    b.setAttribute("aria-pressed", String(prefs.accent === key));
+    b.addEventListener("click", () => {
+      prefs.accent = key;
+      savePrefs();
+      applyPrefs();
+      renderSwatches();
+    });
+    wrap.append(b);
+  }
+}
+
+function syncPrefControls() {
+  $("bg-style").value = prefs.bg;
+  $("dot-size").value = prefs.dotSize;
+  $("dot-strength").value = prefs.dotStrength;
+  $("ui-scale").value = prefs.uiScale;
+  $("motion").value = prefs.motion;
+  $("enter-sends").checked = prefs.enterSends;
+  $("confirm-delete").checked = prefs.confirmDelete;
+  renderSwatches();
+}
+
+function setPref(key, value) {
+  prefs[key] = value;
+  savePrefs();
+  applyPrefs();
+}
 let controller = null;
 let hasKey = false;
 let chats = [];
@@ -245,7 +336,8 @@ function selectChat(id) {
 function deleteChat(id) {
   if (busyGuard()) return;
   const chat = chats.find((c) => c.id === id);
-  if (!chat || !confirm(`Delete "${chat.title}"? This cannot be undone.`)) return;
+  if (!chat) return;
+  if (prefs.confirmDelete && !confirm(`Delete "${chat.title}"? This cannot be undone.`)) return;
   chats = chats.filter((c) => c.id !== id);
   if (activeId === id) activeId = chats[0]?.id ?? null;
   persist();
@@ -453,10 +545,28 @@ function showView(name) {
 
 // ---------- wiring ----------
 input.addEventListener("keydown", (e) => {
-  if (e.key === "Enter" && !e.shiftKey) {
+  if (e.key !== "Enter") return;
+  const sends = prefs.enterSends ? !e.shiftKey : e.ctrlKey || e.metaKey;
+  if (sends) {
     e.preventDefault();
     send();
   }
+});
+
+// Appearance & behaviour controls
+$("bg-style").addEventListener("change", (e) => setPref("bg", e.target.value));
+$("dot-size").addEventListener("change", (e) => setPref("dotSize", e.target.value));
+$("dot-strength").addEventListener("input", (e) => setPref("dotStrength", Number(e.target.value)));
+$("ui-scale").addEventListener("change", (e) => setPref("uiScale", e.target.value));
+$("motion").addEventListener("change", (e) => setPref("motion", e.target.value));
+$("enter-sends").addEventListener("change", (e) => setPref("enterSends", e.target.checked));
+$("confirm-delete").addEventListener("change", (e) => setPref("confirmDelete", e.target.checked));
+$("reset-prefs").addEventListener("click", () => {
+  prefs = { ...DEFAULT_PREFS };
+  savePrefs();
+  applyPrefs();
+  syncPrefControls();
+  flash("Appearance and behaviour reset to defaults.");
 });
 $("composer").addEventListener("submit", (e) => {
   e.preventDefault();
@@ -541,6 +651,8 @@ $("effort").addEventListener("change", (e) => localStorage.setItem("effort", e.t
 
 // ---------- boot ----------
 (async () => {
+  applyPrefs();
+  syncPrefControls();
   renderProfile();
   chats = loadChats();
   activeId = localStorage.getItem(KEYS.active) || null;
