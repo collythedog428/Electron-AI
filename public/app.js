@@ -156,6 +156,7 @@ async function loadModels(force = false) {
         ? `${data.models.length} models from the Anthropic API.`
         : `Built-in list. ${data.error ?? ""}`.trim();
     $("model-info").textContent = note;
+    updateBadge();
   } catch (err) {
     $("model-info").textContent = err.message;
   }
@@ -293,7 +294,28 @@ $("key-delete").addEventListener("click", async () => {
 });
 
 $("refresh-models").addEventListener("click", () => loadModels(true));
-modelSel.addEventListener("change", () => localStorage.setItem("model", modelSel.value));
+modelSel.addEventListener("change", () => {
+  localStorage.setItem("model", modelSel.value);
+  updateBadge();
+});
+
+// ---- navigation between Chat and Settings ----
+function showView(name) {
+  document.querySelectorAll(".view").forEach((v) => v.classList.toggle("active", v.id === `view-${name}`));
+  document.querySelectorAll(".nav-item").forEach((b) => {
+    const active = b.dataset.view === name;
+    b.classList.toggle("active", active);
+    if (active) b.setAttribute("aria-current", "page");
+    else b.removeAttribute("aria-current");
+  });
+  if (name === "chat") input.focus();
+}
+document.querySelectorAll(".nav-item").forEach((b) => b.addEventListener("click", () => showView(b.dataset.view)));
+
+function updateBadge() {
+  const opt = modelSel.selectedOptions[0];
+  $("model-badge").textContent = opt ? opt.textContent : "No model";
+}
 
 $("thinking").checked = localStorage.getItem("thinking") === "1";
 $("thinking").addEventListener("change", (e) => localStorage.setItem("thinking", e.target.checked ? "1" : "0"));
