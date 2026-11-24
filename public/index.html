@@ -100,7 +100,7 @@
           <article class="card key-section">
             <h3><span class="icon" aria-hidden="true">🔑</span>API key</h3>
             <p id="key-status" class="hint">Checking…</p>
-            <form id="key-form" class="field">
+            <form id="key-form" class="field" novalidate>
               <label for="key-input">Paste a new key</label>
               <input id="key-input" type="password" autocomplete="off" spellcheck="false" placeholder="sk-ant-…" required>
               <div class="row">
@@ -177,7 +177,7 @@
 
 <!-- First-run setup -->
 <div id="setup" class="setup" hidden role="dialog" aria-modal="true" aria-labelledby="setup-title">
-  <form id="setup-form" class="setup-card">
+  <form id="setup-form" class="setup-card" novalidate>
     <div class="setup-mark" aria-hidden="true">⚡</div>
     <h2 id="setup-title">Welcome to Electron</h2>
     <p class="hint">Two quick things and you're in.</p>
@@ -192,7 +192,7 @@
       <p id="setup-key-hint" class="hint"></p>
     </div>
 
-    <p id="setup-status" class="small"></p>
+    <p id="setup-status" class="notice" hidden></p>
     <button id="setup-submit" type="submit">Get started</button>
   </form>
 </div>

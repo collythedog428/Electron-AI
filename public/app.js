@@ -493,10 +493,14 @@ function needsSetup() {
   return !getName() || !hasKey;
 }
 
-function setupError(message, isError = true) {
+// Shows a styled notice in the setup card and highlights the field at fault.
+function setupError(message, isError = true, field = null) {
   const el = $("setup-status");
   el.textContent = message;
+  el.hidden = !message;
   el.classList.toggle("error", isError);
+  document.querySelectorAll(".setup-card input").forEach((i) => i.classList.remove("invalid"));
+  if (field) $(field).classList.add("invalid");
 }
 
 function openSetup() {
@@ -515,8 +519,8 @@ $("setup-form").addEventListener("submit", async (e) => {
   const keyField = $("setup-key");
   const key = keyField.value.trim();
   keyField.value = "";
-  if (!name) return setupError("Please enter your name.");
-  if (!hasKey && !key) return setupError("Please paste your API key.");
+  if (!name) return setupError("Please enter your name so Claude knows what to call you.", true, "setup-name");
+  if (!hasKey && !key) return setupError("Please paste your Anthropic API key to continue.", true, "setup-key");
 
   const submit = $("setup-submit");
   submit.disabled = true;
@@ -530,7 +534,7 @@ $("setup-form").addEventListener("submit", async (e) => {
     renderMessages();
     flash(`Welcome, ${name}.`);
   } catch (err) {
-    setupError(err.message);
+    setupError(err.message, true, key ? "setup-key" : null);
   } finally {
     submit.disabled = false;
   }
