@@ -548,6 +548,89 @@ $("setup-skip").addEventListener("click", () => {
   flash("Setup skipped (testing mode). Nothing was saved.");
 });
 
+// ---------- chat export & import ----------
+const EXPORT_FORMAT = "electron-chats";
+const MAX_IMPORT_BYTES = 20 * 1024 * 1024;
+const MAX_IMPORT_CHATS = 500;
+const MAX_IMPORT_MESSAGES = 2000;
+
+function chatDataStatus(message, isError = false) {
+  const el = $("chat-data-status");
+  el.textContent = message;
+  el.classList.toggle("error", isError);
+}
+
+function exportChats() {
+  if (busyGuard()) return;
+  if (chats.length === 0) return chatDataStatus("There are no chats to export yet.", true);
+  const payload = {
+    format: EXPORT_FORMAT,
+    version: 1,
+    exportedAt: new Date().toISOString(),
+    chats: chats.map((c) => ({
+      id: c.id,
+      title: c.title,
+      messages: c.messages.map((m) => ({ role: m.role, content: m.content })),
+    })),
+  };
+  const blob = new Blob([JSON.stringify(payload, null, 2)], { type: "application/json" });
+  const url = URL.createObjectURL(blob);
+  const date = new Date().toISOString().slice(0, 10);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = `electron-chats-${date}.json`;
+  document.body.append(a);
+  a.click();
+  a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+  chatDataStatus(`Exported ${chats.length} chat${chats.length === 1 ? "" : "s"}.`);
+}
+
+// Accepts only the shape this app writes. Anything else is skipped, not trusted.
+function sanitiseImportedChat(raw) {
+  if (!raw || typeof raw !== "object" || !Array.isArray(raw.messages)) return null;
+  const messages = [];
+  for (const m of raw.messages.slice(0, MAX_IMPORT_MESSAGES)) {
+    if (!m || (m.role !== "user" && m.role !== "assistant")) return null;
+    if (typeof m.content !== "string" || !m.content.trim()) return null;
+    messages.push({ role: m.role, content: m.content });
+  }
+  if (messages.length && messages[0].role !== "user") return null;
+  const title =
+    typeof raw.title === "string" && raw.title.trim()
+      ? raw.title.replace(/\s+/g, " ").trim().slice(0, 80)
+      : messages[0]?.content.replace(/\s+/g, " ").slice(0, 40) || "Imported chat";
+  return { id: crypto.randomUUID(), title, messages };
+}
+
+async function importChats(file) {
+  if (busyGuard()) return;
+  if (!file) return;
+  if (file.size > MAX_IMPORT_BYTES) return chatDataStatus("That file is too large to import (20 MB limit).", true);
+  let data;
+  try {
+    data = JSON.parse(await file.text());
+  } catch {
+    return chatDataStatus("That file is not valid JSON, so nothing was imported.", true);
+  }
+  const list = Array.isArray(data) ? data : data?.format === EXPORT_FORMAT ? data.chats : null;
+  if (!Array.isArray(list)) {
+    return chatDataStatus("That file is not an Electron chat export, so nothing was imported.", true);
+  }
+  const imported = list.slice(0, MAX_IMPORT_CHATS).map(sanitiseImportedChat).filter(Boolean);
+  const skipped = list.length - imported.length;
+  if (imported.length === 0) return chatDataStatus("No valid chats were found in that file.", true);
+
+  chats = [...imported, ...chats];
+  persist();
+  renderChatList();
+  renderMessages();
+  chatDataStatus(
+    `Imported ${imported.length} chat${imported.length === 1 ? "" : "s"}` +
+      (skipped ? ` (${skipped} invalid entr${skipped === 1 ? "y" : "ies"} skipped).` : "."),
+  );
+}
+
 // ---------- navigation ----------
 function showView(name) {
   document.querySelectorAll(".view").forEach((v) => v.classList.toggle("active", v.id === `view-${name}`));
@@ -603,6 +686,14 @@ $("chat-list").addEventListener("click", (e) => {
 });
 
 $("open-settings").addEventListener("click", () => showView("settings"));
+
+$("export-chats").addEventListener("click", exportChats);
+$("import-chats").addEventListener("click", () => $("import-file").click());
+$("import-file").addEventListener("change", async (e) => {
+  const file = e.target.files[0];
+  e.target.value = ""; // allow importing the same file again later
+  await importChats(file);
+});
 
 $("clear").addEventListener("click", () => {
   if (busyGuard()) return;

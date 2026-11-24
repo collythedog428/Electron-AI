@@ -166,6 +166,17 @@
           </article>
 
           <article class="card">
+            <h3><span class="icon" aria-hidden="true">💾</span>Chat data</h3>
+            <p class="hint">Export your chats to a JSON file to back them up or move them to another PC. Importing adds chats to the list and never replaces existing ones.</p>
+            <div class="row">
+              <button id="export-chats" type="button">Export chats</button>
+              <button id="import-chats" class="ghost" type="button">Import chats…</button>
+              <input id="import-file" type="file" accept="application/json,.json" hidden>
+            </div>
+            <p id="chat-data-status" class="hint"></p>
+          </article>
+
+          <article class="card">
             <h3><span class="icon" aria-hidden="true">🌐</span>Browser access</h3>
             <p id="local-access" class="hint"></p>
           </article>
