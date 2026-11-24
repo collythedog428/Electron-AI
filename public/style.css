@@ -639,26 +639,6 @@ button.danger:hover:not(:disabled) { background: rgba(255, 92, 108, 0.1); box-sh
   overflow: visible;
   filter: drop-shadow(0 8px 14px rgba(124, 92, 255, 0.35));
 }
-.mascot .bubble {
-  position: absolute;
-  right: 74px;
-  top: 10px;
-  max-width: 240px;
-  padding: 8px 12px;
-  font-size: 12px;
-  white-space: nowrap;
-  color: var(--text);
-  background: var(--glass-strong);
-  border: 1px solid var(--border-strong);
-  border-radius: 14px;
-  box-shadow: var(--shadow);
-  opacity: 0;
-  transform: translateY(6px) scale(0.96);
-  transform-origin: right center;
-  transition: opacity 0.25s var(--ease), transform 0.25s var(--ease);
-  pointer-events: none;
-}
-.mascot .bubble.show { opacity: 1; transform: none; }
 
 .m-body, .m-arm, .m-eye { transform-box: fill-box; }
 .m-body { transform-origin: 50% 100%; animation: bob 2.6s ease-in-out infinite; }
