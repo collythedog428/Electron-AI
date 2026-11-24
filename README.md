@@ -23,7 +23,26 @@ You need Windows 10 or 11. Pick one of the options below.
 
 ### Option 2: Run from the source code
 
-This needs Node.js 20 or newer ([nodejs.org](https://nodejs.org)).
+This needs **Git** and **Node.js 20 or newer**.
+
+**1. Install Git and Node.js** (run in PowerShell; Windows 10/11 with `winget`):
+
+```powershell
+winget install --id Git.Git -e
+winget install --id OpenJS.NodeJS.LTS -e
+```
+
+Close PowerShell and open a new window afterwards, so the new commands are found. Check that both installed:
+
+```powershell
+git --version
+node --version
+npm --version
+```
+
+Node.js must show version 20 or higher. You can also download both from [git-scm.com](https://git-scm.com) and [nodejs.org](https://nodejs.org) instead.
+
+**2. Download the code, install dependencies, and start the app:**
 
 ```powershell
 git clone https://github.com/collythedog428/Electron-AI.git
@@ -32,7 +51,7 @@ npm install
 npm start
 ```
 
-The app opens in its own window. Run `npm start` from the same folder each time you want to open it.
+The app opens in its own window. To open it again later, run `npm start` from the same `Electron-AI` folder. To get the latest changes, run `git pull` in that folder first.
 
 ### Option 3: Build the .exe yourself
 
