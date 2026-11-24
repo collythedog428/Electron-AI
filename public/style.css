@@ -622,6 +622,42 @@ button.danger:hover:not(:disabled) { background: rgba(255, 92, 108, 0.1); box-sh
   50% { box-shadow: 0 0 0 8px rgba(255, 92, 108, 0); }
 }
 
+/* File attachments */
+.attachments {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding: 2px 4px 0;
+}
+.attachments[hidden] { display: none; }
+.chip-row { display: flex; flex-wrap: wrap; gap: 6px; margin: 0 0 6px; }
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  max-width: 260px;
+  padding: 4px 6px 4px 9px;
+  font-size: 12px;
+  color: var(--text);
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid var(--border-strong);
+  border-radius: 999px;
+  animation: fade-up 0.25s var(--ease) both;
+}
+.chip-name { overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+.chip-x {
+  width: 20px;
+  height: 20px;
+  padding: 0;
+  border-radius: 50%;
+  font-size: 14px;
+  line-height: 1;
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--text);
+  box-shadow: none;
+}
+.chip-x:hover:not(:disabled) { background: rgba(255, 92, 108, 0.25); transform: none; box-shadow: none; }
+
 /* Highlight the field that needs attention */
 input.invalid,
 input.invalid:focus {

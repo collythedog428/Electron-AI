@@ -197,7 +197,7 @@ function busyGuard() {
   return false;
 }
 
-function addMessage(role, text = "") {
+function addMessage(role, text = "", attachments = []) {
   const wrap = document.createElement("div");
   wrap.className = `msg ${role}`;
   const label = document.createElement("div");
@@ -206,7 +206,14 @@ function addMessage(role, text = "") {
   const body = document.createElement("div");
   body.className = "body";
   body.textContent = text;
-  wrap.append(label, body);
+  wrap.append(label);
+  if (attachments.length) {
+    const row = document.createElement("div");
+    row.className = "chip-row";
+    row.append(...attachments.map((a) => attachmentChip(a.name, a.kind)));
+    wrap.append(row);
+  }
+  wrap.append(body);
   logEl.append(wrap);
   logEl.scrollTop = logEl.scrollHeight;
   return { wrap, body };
@@ -321,7 +328,7 @@ function renderMessages() {
   if (!chat || chat.messages.length === 0) {
     renderWelcome();
   } else {
-    for (const m of chat.messages) addMessage(m.role, m.content);
+    for (const m of chat.messages) addMessage(m.role, m.content, m.attachments ?? []);
   }
 }
 
@@ -392,6 +399,125 @@ async function loadModels(force = false) {
   }
 }
 
+// ---------- file attachments ----------
+const IMAGE_EXT = { png: "image/png", jpg: "image/jpeg", jpeg: "image/jpeg", gif: "image/gif", webp: "image/webp" };
+const TEXT_EXT = new Set(["txt", "md", "csv", "json", "js", "ts", "py", "html", "css", "xml", "yml", "yaml", "log"]);
+const MAX_FILE_BYTES = { image: 5 * 1024 * 1024, pdf: 20 * 1024 * 1024, text: 500 * 1024 };
+const LIMIT_LABEL = { image: "5 MB", pdf: "20 MB", text: "500 KB" };
+const MAX_PENDING = 8;
+let pending = []; // files chosen for the next message
+const attachmentCache = new Map(); // id -> full file data, kept for this session so later turns can still use it
+
+function fileKind(file) {
+  const ext = file.name.split(".").pop().toLowerCase();
+  if (IMAGE_EXT[ext]) return { kind: "image", mediaType: IMAGE_EXT[ext] };
+  if (ext === "pdf" || file.type === "application/pdf") return { kind: "pdf", mediaType: "application/pdf" };
+  if (TEXT_EXT.has(ext) || file.type.startsWith("text/")) return { kind: "text", mediaType: "text/plain" };
+  return null;
+}
+
+function readFileAs(file, asText) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result);
+    reader.onerror = () => reject(new Error(`Could not read ${file.name}.`));
+    if (asText) reader.readAsText(file);
+    else reader.readAsDataURL(file);
+  });
+}
+
+async function addFiles(files) {
+  for (const file of files) {
+    if (pending.length >= MAX_PENDING) {
+      flash(`You can attach up to ${MAX_PENDING} files to one message.`, true);
+      break;
+    }
+    const info = fileKind(file);
+    if (!info) {
+      flash(`${file.name} is not a supported file type. Use images, PDFs or text files.`, true);
+      continue;
+    }
+    if (file.size > MAX_FILE_BYTES[info.kind]) {
+      flash(`${file.name} is over the ${LIMIT_LABEL[info.kind]} limit for ${info.kind === "text" ? "text" : info.kind + "s"}.`, true);
+      continue;
+    }
+    const base = { id: crypto.randomUUID(), name: file.name, kind: info.kind, mediaType: info.mediaType, size: file.size };
+    try {
+      if (info.kind === "text") {
+        pending.push({ ...base, text: await readFileAs(file, true) });
+      } else {
+        const url = await readFileAs(file, false); // data:<type>;base64,<data>
+        pending.push({ ...base, data: url.slice(url.indexOf(",") + 1) });
+      }
+    } catch (err) {
+      flash(err.message, true);
+    }
+  }
+  renderPending();
+}
+
+function attachmentChip(name, kind, onRemove) {
+  const chip = document.createElement("span");
+  chip.className = "chip";
+  const icon = document.createElement("span");
+  icon.className = "chip-icon";
+  icon.textContent = kind === "image" ? "🖼️" : kind === "pdf" ? "📄" : "📝";
+  const label = document.createElement("span");
+  label.className = "chip-name";
+  label.textContent = name;
+  chip.append(icon, label);
+  if (onRemove) {
+    const x = document.createElement("button");
+    x.type = "button";
+    x.className = "chip-x";
+    x.textContent = "×";
+    x.setAttribute("aria-label", `Remove ${name}`);
+    x.addEventListener("click", onRemove);
+    chip.append(x);
+  }
+  return chip;
+}
+
+function renderPending() {
+  const wrap = $("attachments");
+  wrap.replaceChildren(
+    ...pending.map((f) =>
+      attachmentChip(f.name, f.kind, () => {
+        pending = pending.filter((p) => p.id !== f.id);
+        renderPending();
+      }),
+    ),
+  );
+  wrap.hidden = pending.length === 0;
+}
+
+// Turns a stored message into the API shape. Files from earlier in the session are
+// resent if they're still in memory; after a reload they're replaced by a short note.
+function apiMessage(m) {
+  if (!m.attachments?.length) return { role: m.role, content: m.content };
+  const blocks = [];
+  const missing = [];
+  for (const a of m.attachments) {
+    const f = attachmentCache.get(a.id);
+    if (!f) {
+      missing.push(a.name);
+      continue;
+    }
+    if (f.kind === "text") {
+      blocks.push({ type: "text", text: `File "${f.name}":\n\n${f.text}` });
+    } else {
+      blocks.push({
+        type: f.kind === "image" ? "image" : "document",
+        source: { type: "base64", media_type: f.mediaType, data: f.data },
+      });
+    }
+  }
+  let text = m.content || "";
+  if (missing.length) text = `(Files from earlier in this chat are no longer available: ${missing.join(", ")}.)\n\n${text}`;
+  if (text.trim()) blocks.push({ type: "text", text });
+  return { role: m.role, content: blocks.length ? blocks : "(attachment)" };
+}
+
 // ---------- chatting ----------
 function setBusy(busy) {
   sendBtn.disabled = busy;
@@ -401,21 +527,26 @@ function setBusy(busy) {
 
 async function send() {
   const text = input.value.trim();
-  if (!text || controller) return;
+  if ((!text && pending.length === 0) || controller) return;
   if (!hasKey) return flash("Save an API key in Settings first.", true);
   if (!modelSel.value) return flash("Pick a model in Settings.", true);
 
   const chat = activeChat() ?? createChat();
   if (chat.messages.length === 0) logEl.replaceChildren();
   input.value = "";
-  chat.messages.push({ role: "user", content: text });
+  const files = pending;
+  pending = [];
+  renderPending();
+  for (const f of files) attachmentCache.set(f.id, f);
+  const fileRefs = files.map((f) => ({ id: f.id, name: f.name, kind: f.kind, size: f.size }));
+  chat.messages.push({ role: "user", content: text, attachments: fileRefs });
   if (chat.messages.length === 1) {
-    chat.title = text.replace(/\s+/g, " ").slice(0, 40) || "New chat";
+    chat.title = (text || files[0]?.name || "").replace(/\s+/g, " ").slice(0, 40) || "New chat";
     $("chat-title").textContent = chat.title;
   }
   persist();
   renderChatList();
-  addMessage("user", text);
+  addMessage("user", text, fileRefs);
   const assistant = addMessage("assistant");
   assistant.wrap.classList.add("streaming");
 
@@ -430,6 +561,10 @@ async function send() {
   const failTurn = () => {
     chat.messages.pop(); // drop the unanswered user turn so history stays valid
     persist();
+    if (files.length && pending.length === 0) {
+      pending = files; // give the attachments back so the message can be sent again
+      renderPending();
+    }
   };
 
   try {
@@ -439,7 +574,7 @@ async function send() {
         system: $("system").value,
         thinking: $("thinking").checked,
         effort: $("effort").value || undefined,
-        messages: chat.messages.map((m) => ({ role: m.role, content: m.content })),
+        messages: chat.messages.map(apiMessage),
       },
       (evt) => {
         if (evt.type === "text") {
@@ -765,6 +900,12 @@ async function toggleMic() {
 }
 
 $("mic").addEventListener("click", toggleMic);
+$("attach").addEventListener("click", () => $("file-input").click());
+$("file-input").addEventListener("change", async (e) => {
+  const files = [...e.target.files];
+  e.target.value = ""; // allow picking the same file again
+  await addFiles(files);
+});
 if (speechAvailable) {
   window.claudeHub.onSpeechProgress((p) => {
     const label = p.stage === "engine" ? "Downloading speech engine" : p.stage === "model" ? "Downloading speech model" : "Finishing";
