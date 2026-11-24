@@ -1,0 +1,42 @@
+{
+  "name": "electron-ai",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Electron: a Windows desktop app for every Claude model, with an encrypted, locally stored API key",
+  "type": "module",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "test": "node --test test/",
+    "dist": "electron-builder --win portable"
+  },
+  "build": {
+    "appId": "com.collythedog428.electron-ai",
+    "productName": "Electron",
+    "files": [
+      "main.js",
+      "preload.cjs",
+      "lib/**/*",
+      "public/**/*",
+      "package.json"
+    ],
+    "directories": {
+      "output": "dist"
+    },
+    "win": {
+      "target": [
+        "portable"
+      ]
+    }
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^1.13.0"
+  },
+  "devDependencies": {
+    "electron": "^45.4.1",
+    "electron-builder": "^26.18.0"
+  }
+}

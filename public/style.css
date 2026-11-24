@@ -1,0 +1,349 @@
+/* Electron — modern dark theme with motion. Respects prefers-reduced-motion. */
+:root {
+  color-scheme: dark;
+  --bg: #0b0d12;
+  --bg-glow-1: rgba(124, 92, 255, 0.18);
+  --bg-glow-2: rgba(217, 119, 87, 0.14);
+  --glass: rgba(24, 27, 36, 0.72);
+  --glass-strong: rgba(32, 36, 48, 0.9);
+  --panel: #161a23;
+  --panel-2: #1e2330;
+  --border: rgba(255, 255, 255, 0.08);
+  --border-strong: rgba(255, 255, 255, 0.16);
+  --text: #eef0f6;
+  --muted: #8d95a8;
+  --accent: #7c5cff;
+  --accent-2: #d97757;
+  --accent-text: #ffffff;
+  --danger: #ff5c6c;
+  --error: #ff8a95;
+  --radius: 14px;
+  --shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
+  --ease: cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+* { box-sizing: border-box; }
+
+html, body {
+  margin: 0;
+  height: 100%;
+  background: var(--bg);
+  color: var(--text);
+  font: 14px/1.55 "Segoe UI Variable", "Segoe UI", system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Animated ambient backdrop */
+body::before,
+body::after {
+  content: "";
+  position: fixed;
+  width: 60vmax;
+  height: 60vmax;
+  border-radius: 50%;
+  filter: blur(90px);
+  pointer-events: none;
+  z-index: 0;
+  animation: drift 26s ease-in-out infinite alternate;
+}
+body::before { background: var(--bg-glow-1); top: -25vmax; left: -15vmax; }
+body::after { background: var(--bg-glow-2); bottom: -28vmax; right: -18vmax; animation-duration: 32s; animation-direction: alternate-reverse; }
+
+@keyframes drift {
+  from { transform: translate(0, 0) scale(1); }
+  to { transform: translate(6vmax, 4vmax) scale(1.12); }
+}
+
+.layout {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  grid-template-columns: 310px 1fr;
+  height: 100vh;
+}
+
+/* ---------- Sidebar ---------- */
+.sidebar {
+  background: var(--glass);
+  backdrop-filter: blur(18px) saturate(140%);
+  -webkit-backdrop-filter: blur(18px) saturate(140%);
+  border-right: 1px solid var(--border);
+  padding: 20px 18px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  animation: slide-in 0.6s var(--ease) both;
+}
+
+.sidebar h1 {
+  font-size: 22px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  margin: 0 0 4px;
+  background: linear-gradient(120deg, #fff 10%, #b9a8ff 55%, #ffb199 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.logo { display: inline-block; animation: pulse 3s ease-in-out infinite; }
+
+.sidebar h2 {
+  font-size: 11px;
+  margin: 0 0 6px;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--muted);
+}
+
+section {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  padding: 14px;
+  background: rgba(255, 255, 255, 0.025);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  transition: border-color 0.3s var(--ease), background 0.3s var(--ease);
+}
+section:hover { border-color: var(--border-strong); }
+
+label {
+  font-weight: 600;
+  font-size: 11px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+label.check {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: var(--text);
+  font-weight: 500;
+  font-size: 14px;
+  text-transform: none;
+  letter-spacing: 0;
+  cursor: pointer;
+}
+label.check input { accent-color: var(--accent); width: 16px; height: 16px; }
+
+select, textarea, input[type="password"] {
+  width: 100%;
+  background: var(--panel-2);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 9px 11px;
+  font: inherit;
+  outline: none;
+  transition: border-color 0.2s var(--ease), box-shadow 0.2s var(--ease), background 0.2s var(--ease);
+}
+select:focus, textarea:focus, input[type="password"]:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgba(124, 92, 255, 0.25);
+}
+select option { background: var(--panel-2); }
+textarea { resize: vertical; }
+
+/* ---------- Buttons ---------- */
+button {
+  position: relative;
+  overflow: hidden;
+  background: linear-gradient(135deg, var(--accent), #a77cff);
+  color: var(--accent-text);
+  border: 0;
+  border-radius: 10px;
+  padding: 9px 16px;
+  font: inherit;
+  font-weight: 650;
+  cursor: pointer;
+  box-shadow: 0 6px 18px rgba(124, 92, 255, 0.28);
+  transition: transform 0.15s var(--ease), box-shadow 0.25s var(--ease), filter 0.25s var(--ease), opacity 0.2s;
+}
+button::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle at var(--x, 50%) var(--y, 50%), rgba(255,255,255,.35), transparent 60%);
+  opacity: 0;
+  transition: opacity 0.4s var(--ease);
+  pointer-events: none;
+}
+button:hover:not(:disabled) { transform: translateY(-1px); box-shadow: 0 10px 26px rgba(124, 92, 255, 0.38); filter: brightness(1.06); }
+button:hover:not(:disabled)::after { opacity: 1; }
+button:active:not(:disabled) { transform: translateY(0) scale(0.98); }
+button:focus-visible { outline: 2px solid #fff; outline-offset: 2px; }
+button:disabled { opacity: 0.45; cursor: default; box-shadow: none; }
+
+button.ghost {
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--text);
+  border: 1px solid var(--border-strong);
+  box-shadow: none;
+}
+button.ghost:hover:not(:disabled) { background: rgba(255, 255, 255, 0.08); box-shadow: none; }
+button.danger {
+  background: transparent;
+  color: var(--danger);
+  border: 1px solid rgba(255, 92, 108, 0.45);
+  box-shadow: none;
+}
+button.danger:hover:not(:disabled) { background: rgba(255, 92, 108, 0.1); box-shadow: 0 6px 18px rgba(255, 92, 108, 0.18); }
+
+#send {
+  padding: 10px 22px;
+  background: linear-gradient(135deg, var(--accent-2), var(--accent));
+}
+
+.key-section form { display: flex; flex-direction: column; gap: 8px; }
+.key-section form button { align-self: flex-start; }
+
+.muted { color: var(--muted); }
+.small { font-size: 12px; margin: 0; line-height: 1.5; }
+.error { color: var(--error) !important; animation: shake 0.4s var(--ease); }
+
+/* ---------- Chat ---------- */
+main {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  padding: 20px 26px 22px;
+  gap: 14px;
+}
+
+.log {
+  flex: 1;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 4px 8px 4px 2px;
+  scroll-behavior: smooth;
+}
+.log:empty::before {
+  content: "Start a conversation. Your key stays encrypted on this PC.";
+  margin: auto;
+  color: var(--muted);
+  font-size: 15px;
+  animation: fade-up 0.8s var(--ease) both;
+}
+
+.msg {
+  max-width: 78%;
+  padding: 13px 16px;
+  border-radius: 18px;
+  background: var(--glass-strong);
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow);
+  animation: msg-in 0.45s var(--ease) both;
+}
+.msg.assistant { align-self: flex-start; border-top-left-radius: 6px; }
+.msg.user {
+  align-self: flex-end;
+  background: linear-gradient(135deg, rgba(124, 92, 255, 0.28), rgba(217, 119, 87, 0.22));
+  border-color: rgba(124, 92, 255, 0.35);
+  border-top-right-radius: 6px;
+}
+.msg .role {
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--muted);
+  margin-bottom: 5px;
+}
+.msg .body { white-space: pre-wrap; word-wrap: break-word; }
+
+/* Typing indicator while waiting for the first token */
+.msg.streaming .body:empty::after {
+  content: "";
+  display: inline-block;
+  width: 36px;
+  height: 10px;
+  background:
+    radial-gradient(circle, var(--muted) 3px, transparent 3.5px) 0 0 / 12px 10px,
+    radial-gradient(circle, var(--muted) 3px, transparent 3.5px) 12px 0 / 12px 10px,
+    radial-gradient(circle, var(--muted) 3px, transparent 3.5px) 24px 0 / 12px 10px;
+  background-repeat: no-repeat;
+  animation: pulse-dots 1.2s ease-in-out infinite;
+}
+/* Soft caret while text is streaming */
+.msg.streaming .body:not(:empty)::after {
+  content: "▍";
+  color: var(--accent);
+  margin-left: 2px;
+  animation: blink 1s steps(2) infinite;
+}
+
+details.thinking {
+  margin-bottom: 10px;
+  color: var(--muted);
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 6px 10px;
+}
+details.thinking summary { cursor: pointer; font-size: 12px; font-weight: 600; }
+details.thinking pre {
+  white-space: pre-wrap;
+  font: 12px/1.5 Consolas, "Cascadia Code", monospace;
+  margin: 8px 0 4px;
+  max-height: 260px;
+  overflow-y: auto;
+}
+
+/* Composer */
+#composer {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 12px;
+  background: var(--glass);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  box-shadow: var(--shadow);
+  transition: border-color 0.3s var(--ease), box-shadow 0.3s var(--ease);
+}
+#composer:focus-within {
+  border-color: rgba(124, 92, 255, 0.5);
+  box-shadow: 0 0 0 4px rgba(124, 92, 255, 0.14), var(--shadow);
+}
+#composer textarea {
+  background: transparent;
+  border: 0;
+  box-shadow: none;
+  padding: 6px 8px;
+  min-height: 64px;
+  font-size: 15px;
+}
+#composer textarea:focus { box-shadow: none; }
+.actions { display: flex; align-items: center; gap: 10px; justify-content: flex-end; }
+.actions #status { margin-right: auto; min-height: 1em; transition: color 0.3s; }
+#stop { animation: fade-up 0.3s var(--ease) both; }
+
+/* ---------- Motion ---------- */
+@keyframes slide-in { from { opacity: 0; transform: translateX(-14px); } to { opacity: 1; transform: none; } }
+@keyframes msg-in { from { opacity: 0; transform: translateY(10px) scale(0.98); } to { opacity: 1; transform: none; } }
+@keyframes fade-up { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+@keyframes pulse { 0%, 100% { transform: scale(1) rotate(0deg); } 50% { transform: scale(1.12) rotate(-6deg); } }
+@keyframes blink { 50% { opacity: 0; } }
+@keyframes shake { 20%, 60% { transform: translateX(-4px); } 40%, 80% { transform: translateX(4px); } }
+@keyframes pulse-dots { 0%, 100% { opacity: 0.35; } 50% { opacity: 1; } }
+
+/* Thin, quiet scrollbars */
+* { scrollbar-width: thin; scrollbar-color: rgba(255,255,255,.15) transparent; }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+}
