@@ -98,13 +98,14 @@ const ACCENTS = {
 const DEFAULT_PREFS = {
   bg: "dots-glow", // dots-glow | dots | glow | plain
   dotSize: "22",
-  dotStrength: 50, // 0-100
+  dotStrength: 25, // 0-100
   accent: "violet",
   uiScale: "1",
-  motion: "system", // system | full | reduced
+  motion: "full", // system | full | reduced
   enterSends: true,
   confirmDelete: true,
 };
+const DEFAULT_MODEL = "claude-haiku-5-5";
 let prefs = loadPrefs();
 
 function loadPrefs() {
@@ -379,7 +380,7 @@ async function loadModels(force = false) {
       }),
     );
     if (previous && data.models.some((m) => m.id === previous)) modelSel.value = previous;
-    else if (data.models.some((m) => m.id === "claude-opus-5-5")) modelSel.value = "claude-opus-5-5";
+    else if (data.models.some((m) => m.id === DEFAULT_MODEL)) modelSel.value = DEFAULT_MODEL;
     const note =
       data.source === "api"
         ? `${data.models.length} models from the Anthropic API.`
