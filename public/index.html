@@ -43,6 +43,7 @@
           <textarea id="input" rows="3" placeholder="Message Claude… (Enter to send, Shift+Enter for a new line)"></textarea>
           <div class="actions">
             <span id="status" class="muted small"></span>
+            <button type="button" id="mic" class="ghost mic" title="Dictate a message" aria-label="Dictate a message" hidden>🎙️</button>
             <button type="button" id="stop" class="ghost" hidden>Stop</button>
             <button type="submit" id="send">Send</button>
           </div>
@@ -174,6 +175,16 @@
               <input id="import-file" type="file" accept="application/json,.json" hidden>
             </div>
             <p id="chat-data-status" class="hint"></p>
+          </article>
+
+          <article class="card">
+            <h3><span class="icon" aria-hidden="true">🎙️</span>Speech to text</h3>
+            <p class="hint">Dictate messages with the 🎙️ button. Transcription runs offline on this PC with Whisper. The engine and model are downloaded once (about 150 MB).</p>
+            <p id="speech-status" class="hint">Checking…</p>
+            <div class="row">
+              <button id="speech-install" type="button" hidden>Download speech model</button>
+            </div>
+            <p id="speech-progress" class="hint"></p>
           </article>
 
           <article class="card">

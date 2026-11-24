@@ -5,6 +5,7 @@ import { fileURLToPath } from "node:url";
 import { Hub, HttpError } from "./lib/hub.js";
 import { KeyStore } from "./lib/key-store.js";
 import { startLocalServer } from "./lib/local-server.js";
+import { SpeechService } from "./lib/speech.js";
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 const PUBLIC_DIR = path.join(HERE, "public");
@@ -24,6 +25,8 @@ const hub = new Hub({
     crypto: safeStorage,
   }),
 });
+
+const speech = new SpeechService({ dir: path.join(app.getPath("userData"), "whisper") });
 
 const controllers = new Map(); // requestId -> AbortController
 let localAccess = { url: null, error: "Local browser access is disabled." };
@@ -50,6 +53,17 @@ handle("hub:saveKey", (_e, apiKey) => hub.saveKey(apiKey));
 handle("hub:deleteKey", () => hub.deleteKey());
 handle("hub:models", (_e, force) => hub.models(force === true));
 handle("app:localAccess", () => localAccess);
+
+handle("speech:status", () => speech.status());
+handle("speech:install", async (event) => {
+  return speech.install((progress) => {
+    if (!event.sender.isDestroyed()) event.sender.send("speech:progress", progress);
+  });
+});
+handle("speech:transcribe", (_e, bytes) => {
+  if (!(bytes instanceof Uint8Array)) throw new HttpError(400, "No audio was received.");
+  return speech.transcribe(Buffer.from(bytes.buffer, bytes.byteOffset, bytes.byteLength));
+});
 
 handle("hub:chat", async (event, id, body) => {
   if (typeof id !== "string" || id.length === 0 || id.length > 64) {

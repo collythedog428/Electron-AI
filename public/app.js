@@ -631,6 +631,160 @@ async function importChats(file) {
   );
 }
 
+// ---------- speech to text (desktop app only) ----------
+const MAX_RECORDING_MS = 3 * 60 * 1000;
+const speechAvailable = Boolean(window.claudeHub?.speechStatus);
+let recorder = null;
+let recordingStream = null;
+let recordTimer = null;
+let transcribing = false;
+
+async function refreshSpeech() {
+  if (!speechAvailable) {
+    $("speech-status").textContent = "Speech to text is available in the desktop app.";
+    return;
+  }
+  try {
+    const s = await window.claudeHub.speechStatus();
+    $("mic").hidden = !s.supported;
+    $("speech-status").textContent = s.ready
+      ? "Ready. Click 🎙️ in the chat box to dictate."
+      : "Not installed yet. Download the speech model below.";
+    $("speech-install").hidden = s.ready;
+  } catch (err) {
+    $("speech-status").textContent = err.message;
+  }
+}
+
+// Whisper expects 16 kHz mono 16-bit WAV. Convert the recorded audio to that.
+function encodeWav(samples, sampleRate) {
+  const buffer = new ArrayBuffer(44 + samples.length * 2);
+  const view = new DataView(buffer);
+  const writeText = (offset, text) => {
+    for (let i = 0; i < text.length; i++) view.setUint8(offset + i, text.charCodeAt(i));
+  };
+  writeText(0, "RIFF");
+  view.setUint32(4, 36 + samples.length * 2, true);
+  writeText(8, "WAVE");
+  writeText(12, "fmt ");
+  view.setUint32(16, 16, true);
+  view.setUint16(20, 1, true); // PCM
+  view.setUint16(22, 1, true); // mono
+  view.setUint32(24, sampleRate, true);
+  view.setUint32(28, sampleRate * 2, true);
+  view.setUint16(32, 2, true);
+  view.setUint16(34, 16, true);
+  writeText(36, "data");
+  view.setUint32(40, samples.length * 2, true);
+  let offset = 44;
+  for (let i = 0; i < samples.length; i++, offset += 2) {
+    const s = Math.max(-1, Math.min(1, samples[i]));
+    view.setInt16(offset, s < 0 ? s * 0x8000 : s * 0x7fff, true);
+  }
+  return new Uint8Array(buffer);
+}
+
+async function toWav16k(arrayBuffer) {
+  const ctx = new AudioContext();
+  let decoded;
+  try {
+    decoded = await ctx.decodeAudioData(arrayBuffer);
+  } finally {
+    ctx.close();
+  }
+  const length = Math.ceil(decoded.duration * 16000);
+  if (!length) throw new Error("No audio was captured.");
+  const offline = new OfflineAudioContext(1, length, 16000);
+  const source = offline.createBufferSource();
+  source.buffer = decoded;
+  source.connect(offline.destination);
+  source.start();
+  const rendered = await offline.startRendering();
+  return encodeWav(rendered.getChannelData(0), 16000);
+}
+
+async function finishRecording(chunks, mime) {
+  const mic = $("mic");
+  mic.classList.remove("recording");
+  mic.textContent = "🎙️";
+  transcribing = true;
+  mic.disabled = true;
+  flash("Transcribing…");
+  try {
+    if (chunks.length === 0) throw new Error("No audio was captured.");
+    const blob = new Blob(chunks, { type: mime || "audio/webm" });
+    const wav = await toWav16k(await blob.arrayBuffer());
+    const text = await window.claudeHub.speechTranscribe(wav);
+    if (!text) return flash("No speech was detected.", true);
+    input.value = input.value.trim() ? `${input.value.trimEnd()} ${text}` : text;
+    input.focus();
+    flash("Transcribed. Check the text, then send.");
+  } catch (err) {
+    flash(err.message, true);
+  } finally {
+    transcribing = false;
+    mic.disabled = false;
+  }
+}
+
+function stopRecording() {
+  clearTimeout(recordTimer);
+  if (recorder && recorder.state !== "inactive") recorder.stop();
+  recordingStream?.getTracks().forEach((t) => t.stop());
+  recorder = null;
+  recordingStream = null;
+}
+
+async function toggleMic() {
+  if (recorder) return stopRecording();
+  if (transcribing) return flash("Still transcribing the last recording.", true);
+  if (controller) return flash("Wait for the reply or press Stop first.", true);
+  const s = await window.claudeHub.speechStatus();
+  if (!s.ready) return flash("Download the speech model in Settings first.", true);
+
+  let stream;
+  try {
+    stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+  } catch {
+    return flash("Microphone access was blocked. Allow it in Windows privacy settings.", true);
+  }
+  const chunks = [];
+  const rec = new MediaRecorder(stream);
+  const mime = rec.mimeType;
+  rec.ondataavailable = (e) => {
+    if (e.data.size) chunks.push(e.data);
+  };
+  rec.onstop = () => finishRecording(chunks, mime);
+  recorder = rec;
+  recordingStream = stream;
+  rec.start();
+  $("mic").classList.add("recording");
+  $("mic").textContent = "⏹";
+  flash("Listening… click ⏹ when you're done.");
+  recordTimer = setTimeout(stopRecording, MAX_RECORDING_MS);
+}
+
+$("mic").addEventListener("click", toggleMic);
+if (speechAvailable) {
+  window.claudeHub.onSpeechProgress((p) => {
+    const label = p.stage === "engine" ? "Downloading speech engine" : p.stage === "model" ? "Downloading speech model" : "Finishing";
+    $("speech-progress").textContent = `${label}… ${p.percent}%`;
+  });
+}
+$("speech-install").addEventListener("click", async () => {
+  const btn = $("speech-install");
+  btn.disabled = true;
+  try {
+    await window.claudeHub.speechInstall();
+    $("speech-progress").textContent = "Speech model installed.";
+  } catch (err) {
+    $("speech-progress").textContent = err.message;
+  } finally {
+    btn.disabled = false;
+    await refreshSpeech();
+  }
+});
+
 // ---------- navigation ----------
 function showView(name) {
   document.querySelectorAll(".view").forEach((v) => v.classList.toggle("active", v.id === `view-${name}`));
@@ -764,6 +918,7 @@ $("effort").addEventListener("change", (e) => localStorage.setItem("effort", e.t
   renderMessages();
 
   await refreshStatus();
+  await refreshSpeech();
   if (needsSetup()) openSetup();
   await loadModels();
 

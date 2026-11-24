@@ -20,4 +20,12 @@ contextBridge.exposeInMainWorld("claudeHub", {
     return () => ipcRenderer.removeListener("hub:event", listener);
   },
   localAccess: async () => unwrap(await ipcRenderer.invoke("app:localAccess")),
+  speechStatus: async () => unwrap(await ipcRenderer.invoke("speech:status")),
+  speechInstall: async () => unwrap(await ipcRenderer.invoke("speech:install")),
+  speechTranscribe: async (wavBytes) => unwrap(await ipcRenderer.invoke("speech:transcribe", wavBytes)),
+  onSpeechProgress: (callback) => {
+    const listener = (_event, progress) => callback(progress);
+    ipcRenderer.on("speech:progress", listener);
+    return () => ipcRenderer.removeListener("speech:progress", listener);
+  },
 });
