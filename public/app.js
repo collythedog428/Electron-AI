@@ -1122,7 +1122,11 @@ $("effort").addEventListener("change", (e) => localStorage.setItem("effort", e.t
 (async () => {
   // Copy Spark's drawing into the Settings preview.
   const previewEl = $("outfit-preview");
-  if (previewEl) previewEl.innerHTML = $("mascot").querySelector("svg").outerHTML;
+  if (previewEl) {
+    previewEl.innerHTML = $("mascot").querySelector("svg").outerHTML;
+    // Give the preview headroom so hats above the head aren't cut off.
+    previewEl.querySelector("svg").setAttribute("viewBox", "-14 -18 148 188");
+  }
   applyPrefs();
   syncPrefControls();
   renderProfile();

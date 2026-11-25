@@ -649,7 +649,7 @@ button.danger:hover:not(:disabled) { background: rgba(255, 92, 108, 0.1); box-sh
 
 /* Live preview in Settings */
 .outfit-preview { display: flex; justify-content: center; padding: 4px 0 8px; }
-.preview-mascot { width: 110px; height: 146px; cursor: default; }
+.preview-mascot { width: 118px; height: 150px; cursor: default; }
 .preview-mascot[data-mood="idle"] { cursor: default; }
 
 /* Spark's outfit (set from Settings) */
