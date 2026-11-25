@@ -1007,6 +1007,9 @@ const voiceActive = () => $("view-voice").classList.contains("active");
 
 function setVoiceStatus(text, listening = false) {
   $("voice-status").textContent = text;
+  // Drives the reactor ring: listening, busy (thinking or transcribing), speaking or idle.
+  const state = listening ? "listening" : /^(Thinking|Transcribing)/.test(text) ? "busy" : /^Speaking/.test(text) ? "speaking" : "idle";
+  document.querySelector(".voice-console").dataset.state = state;
   $("voice-talk").classList.toggle("listening", listening);
   $("voice-talk").textContent = listening ? "⏹ Stop" : "🎙️ Tap to talk";
 }

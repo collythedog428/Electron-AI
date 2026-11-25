@@ -684,7 +684,56 @@ button.danger:hover:not(:disabled) { background: rgba(255, 92, 108, 0.1); box-sh
   padding: 24px 26px 30px;
   text-align: center;
 }
-.mascot.voice-spark { width: 200px; height: 266px; cursor: pointer; }
+/* HUD-style reactor around Spark (inspired by the JARVIS interface) */
+.reactor { position: relative; width: 340px; height: 340px; flex: none; }
+.reactor > svg { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
+.reactor-dots { animation: orbit 40s linear infinite; }
+.reactor-ticks { animation: orbit 90s linear infinite reverse; }
+.reactor-ring {
+  position: absolute;
+  inset: 44px;
+  border-radius: 50%;
+  border: 3px solid #6fd0ff;
+  background: radial-gradient(circle at 50% 40%, #0b2236 0%, #04090f 72%);
+  box-shadow: 0 0 22px rgba(111, 208, 255, 0.75), inset 0 0 28px rgba(111, 208, 255, 0.35);
+}
+.reactor-arc {
+  position: absolute;
+  inset: 26px;
+  border-radius: 50%;
+  border: 2px solid transparent;
+  border-top-color: #eaf8ff;
+  border-left-color: rgba(190, 235, 255, 0.45);
+  animation: orbit 3s linear infinite;
+}
+.reactor .mascot.voice-spark {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 124px;
+  height: 165px;
+  transform: translate(-50%, -50%);
+  cursor: pointer;
+}
+.reactor-word {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 300;
+  letter-spacing: 0.5em;
+  color: #eaf8ff;
+  text-shadow: 0 0 12px #5ac8ff;
+  padding-left: 0.5em; /* balances the trailing letter-spacing */
+}
+.voice-console[data-state="listening"] .reactor-arc { animation-duration: 0.9s; border-top-color: #ff8a95; }
+.voice-console[data-state="listening"] .reactor-ring { border-color: #ff8a95; box-shadow: 0 0 26px rgba(255, 138, 149, 0.8), inset 0 0 28px rgba(255, 138, 149, 0.3); }
+.voice-console[data-state="busy"] .reactor-arc { animation-duration: 1.2s; }
+.voice-console[data-state="busy"] .reactor-dots { animation-duration: 12s; }
+.voice-console[data-state="speaking"] .reactor-ring { animation: ring-pulse 1.1s ease-in-out infinite; }
+@keyframes orbit { to { transform: rotate(360deg); } }
+@keyframes ring-pulse {
+  0%, 100% { box-shadow: 0 0 18px rgba(111, 208, 255, 0.6), inset 0 0 22px rgba(111, 208, 255, 0.25); }
+  50% { box-shadow: 0 0 40px rgba(111, 208, 255, 1), inset 0 0 36px rgba(111, 208, 255, 0.5); }
+}
 .voice-status { margin: 0; font-size: 18px; font-weight: 700; letter-spacing: -0.01em; }
 .voice-caption {
   max-width: 620px;

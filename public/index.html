@@ -140,8 +140,19 @@
 
     <!-- Voice view: a console for talking to Spark -->
     <section id="view-voice" class="view">
-      <div class="voice-console">
-        <div id="voice-spark" class="mascot voice-spark" data-mood="idle" data-hat="none" data-glasses="off" aria-hidden="true"></div>
+      <div class="voice-console" data-state="idle">
+        <div class="reactor" aria-hidden="true">
+          <svg class="reactor-dots" viewBox="0 0 340 340">
+            <circle cx="170" cy="170" r="160" fill="none" stroke="#6fd0ff" stroke-width="2" stroke-dasharray="1 9" opacity=".55"/>
+          </svg>
+          <svg class="reactor-ticks" viewBox="0 0 340 340">
+            <circle cx="170" cy="170" r="150" fill="none" stroke="#9fe3ff" stroke-width="2" stroke-dasharray="1 15.6" opacity=".7"/>
+          </svg>
+          <div class="reactor-ring"></div>
+          <div class="reactor-arc"></div>
+          <div id="voice-spark" class="mascot voice-spark" data-mood="idle" data-hat="none" data-glasses="off"></div>
+        </div>
+        <p class="reactor-word">SPARK</p>
         <p id="voice-status" class="voice-status" aria-live="polite">Tap to talk</p>
         <p id="voice-caption" class="voice-caption"></p>
         <button id="voice-talk" class="voice-talk" type="button">🎙️ Tap to talk</button>
