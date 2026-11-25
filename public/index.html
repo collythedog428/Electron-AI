@@ -69,6 +69,15 @@
                   <path class="m-mouth m-sad" d="M49 74 Q60 64 71 74" fill="none" stroke="#1a1530" stroke-width="4" stroke-linecap="round"/>
                   <ellipse class="m-mouth m-open" cx="60" cy="71" rx="5" ry="4.5" fill="#ff8a95"/>
                 </g>
+                <g class="hat hat-party"><path d="M60 -4 L44 16 L76 16 Z" fill="#fbbf24"/><circle cx="60" cy="-6" r="3" fill="#f472b6"/></g>
+                <g class="hat hat-crown"><path d="M36 16 L40 -2 L52 8 L60 -6 L68 8 L80 -2 L84 16 Z" fill="#fbbf24" stroke="#b45309" stroke-width="1.5"/></g>
+                <g class="hat hat-beanie"><path d="M24 38 Q24 8 60 8 Q96 8 96 38 Z" fill="#f472b6"/><rect x="22" y="34" width="76" height="8" rx="4" fill="#db2777"/><circle cx="60" cy="6" r="5" fill="#fbcfe8"/></g>
+                <g class="hat hat-cap"><path d="M28 36 Q28 10 60 10 Q92 10 92 36 Z" fill="#34d399"/><path d="M50 36 L98 36 Q102 38 96 42 L50 42 Z" fill="#059669"/></g>
+                <g class="glasses">
+                  <circle cx="46" cy="50" r="10" fill="none" stroke="#2e2a4f" stroke-width="2.5"/>
+                  <circle cx="74" cy="50" r="10" fill="none" stroke="#2e2a4f" stroke-width="2.5"/>
+                  <line x1="56" y1="50" x2="64" y2="50" stroke="#2e2a4f" stroke-width="2.5"/>
+                </g>
                 <g class="prop prop-book">
                   <rect x="44" y="104" width="32" height="22" rx="3" fill="#fde68a" stroke="#b45309" stroke-width="2"/>
                   <line x1="60" y1="104" x2="60" y2="126" stroke="#b45309" stroke-width="2"/>
@@ -239,6 +248,25 @@
             <div class="row">
               <button id="reset-prefs" class="ghost" type="button">Reset appearance and behaviour</button>
             </div>
+          </article>
+
+          <article class="card">
+            <h3><span class="icon" aria-hidden="true">🎩</span>Spark's outfit</h3>
+            <div class="field">
+              <label for="spark-hat">Hat</label>
+              <select id="spark-hat">
+                <option value="none">None</option>
+                <option value="party">Party hat</option>
+                <option value="crown">Crown</option>
+                <option value="beanie">Beanie</option>
+                <option value="cap">Cap</option>
+              </select>
+            </div>
+            <div class="field">
+              <label>Shirt colour</label>
+              <div id="shirt-swatches" class="swatches" role="group" aria-label="Shirt colour"></div>
+            </div>
+            <label class="check"><input type="checkbox" id="spark-glasses"> Wear glasses</label>
           </article>
 
           <article class="card">

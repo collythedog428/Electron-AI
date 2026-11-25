@@ -107,6 +107,15 @@ const DEFAULT_PREFS = {
   enterSends: true,
   confirmDelete: true,
   showMascot: true,
+  outfit: { hat: "none", shirt: "violet", glasses: false },
+};
+const SHIRTS = {
+  violet: { label: "Violet", color: "#7c5cff" },
+  ocean: { label: "Ocean", color: "#2a9df4" },
+  rose: { label: "Rose", color: "#f43f5e" },
+  mint: { label: "Mint", color: "#10b981" },
+  amber: { label: "Amber", color: "#f59e0b" },
+  slate: { label: "Slate", color: "#475569" },
 };
 const DEFAULT_MODEL = "claude-haiku-5-5";
 let prefs = loadPrefs();
@@ -139,6 +148,10 @@ function applyPrefs() {
   style.setProperty("--accent-light", accent.light);
   root.dataset.motion = prefs.motion;
   $("mascot").hidden = !prefs.showMascot;
+  const outfit = { ...DEFAULT_PREFS.outfit, ...(prefs.outfit || {}) };
+  $("mascot").dataset.hat = outfit.hat;
+  $("mascot").dataset.glasses = outfit.glasses ? "on" : "off";
+  style.setProperty("--shirt", (SHIRTS[outfit.shirt] ?? SHIRTS.violet).color);
 
   input.placeholder = prefs.enterSends
     ? "Message Claude… (Enter to send, Shift+Enter for a new line)"
@@ -175,6 +188,22 @@ function syncPrefControls() {
   $("enter-sends").checked = prefs.enterSends;
   $("confirm-delete").checked = prefs.confirmDelete;
   $("show-mascot").checked = prefs.showMascot;
+  const outfit = { ...DEFAULT_PREFS.outfit, ...(prefs.outfit || {}) };
+  $("spark-hat").value = outfit.hat;
+  $("spark-glasses").checked = outfit.glasses;
+  const wrap = $("shirt-swatches");
+  wrap.replaceChildren();
+  for (const [key, s] of Object.entries(SHIRTS)) {
+    const b = document.createElement("button");
+    b.type = "button";
+    b.className = "swatch";
+    b.title = s.label;
+    b.setAttribute("aria-label", `${s.label} shirt`);
+    b.style.setProperty("--sw", s.color);
+    b.setAttribute("aria-pressed", String(outfit.shirt === key));
+    b.addEventListener("click", () => setOutfit({ shirt: key }));
+    wrap.append(b);
+  }
   renderSwatches();
 }
 
@@ -972,6 +1001,14 @@ $("motion").addEventListener("change", (e) => setPref("motion", e.target.value))
 $("enter-sends").addEventListener("change", (e) => setPref("enterSends", e.target.checked));
 $("confirm-delete").addEventListener("change", (e) => setPref("confirmDelete", e.target.checked));
 $("show-mascot").addEventListener("change", (e) => setPref("showMascot", e.target.checked));
+$("spark-hat").addEventListener("change", (e) => setOutfit({ hat: e.target.value }));
+$("spark-glasses").addEventListener("change", (e) => setOutfit({ glasses: e.target.checked }));
+function setOutfit(changes) {
+  prefs.outfit = { ...DEFAULT_PREFS.outfit, ...(prefs.outfit || {}), ...changes };
+  savePrefs();
+  applyPrefs();
+  syncPrefControls();
+}
 $("reset-prefs").addEventListener("click", () => {
   prefs = { ...DEFAULT_PREFS };
   savePrefs();

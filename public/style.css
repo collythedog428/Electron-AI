@@ -640,6 +640,15 @@ button.danger:hover:not(:disabled) { background: rgba(255, 92, 108, 0.1); box-sh
   filter: drop-shadow(0 8px 14px rgba(124, 92, 255, 0.35));
 }
 
+/* Spark's outfit (set from Settings) */
+.m-torso { fill: var(--shirt, #7c5cff); }
+.hat, .glasses { opacity: 0; transition: opacity 0.3s; }
+.mascot[data-hat="party"] .hat-party,
+.mascot[data-hat="crown"] .hat-crown,
+.mascot[data-hat="beanie"] .hat-beanie,
+.mascot[data-hat="cap"] .hat-cap { opacity: 1; }
+.mascot[data-glasses="on"] .glasses { opacity: 1; }
+
 .m-body, .m-arm, .m-eye { transform-box: fill-box; }
 .m-body { transform-origin: 50% 100%; animation: bob 2.6s ease-in-out infinite; }
 .m-arm-r { transform-origin: 0% 0%; }
