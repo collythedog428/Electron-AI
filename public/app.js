@@ -783,8 +783,8 @@ $("setup-skip").addEventListener("click", () => {
 
 // ---------- chat export & import ----------
 const EXPORT_FORMAT = "electron-chats";
-const MAX_IMPORT_BYTES = 20 * 1024 * 1024;
-const MAX_IMPORT_CHATS = 500;
+const MAX_IMPORT_BYTES = 200 * 1024 * 1024; // ChatGPT exports can be large
+const MAX_IMPORT_CHATS = 5000;
 const MAX_IMPORT_MESSAGES = 2000;
 
 function chatDataStatus(message, isError = false) {
@@ -844,8 +844,12 @@ function chatListFromJson(text) {
   } catch {
     throw new Error("That file is not valid JSON, so nothing was imported.");
   }
+  // ChatGPT and Claude exports are arrays of conversations; convert them to our shape.
+  if (Array.isArray(data) && data.some(isForeignConversation)) {
+    return data.filter(isForeignConversation).map(normaliseForeignConversation).filter(Boolean);
+  }
   const list = Array.isArray(data) ? data : data?.format === EXPORT_FORMAT ? data.chats : null;
-  if (!Array.isArray(list)) throw new Error("That file is not an Electron chat export, so nothing was imported.");
+  if (!Array.isArray(list)) throw new Error("That file is not a chat export this app recognises (Electron, ChatGPT or Claude).");
   return list;
 }
 
@@ -853,7 +857,7 @@ function chatListFromJson(text) {
 async function readChatLists(file) {
   const isZip = file.name.toLowerCase().endsWith(".zip") || file.type === "application/zip";
   if (!isZip) return chatListFromJson(await file.text());
-  if (file.size > ZIP_MAX_BYTES) throw new Error("That zip is too large to import (50 MB limit).");
+  if (file.size > ZIP_MAX_BYTES) throw new Error("That zip is too large to import (200 MB limit).");
   const entries = await readZipJsonFiles(new Uint8Array(await file.arrayBuffer()));
   if (entries.length === 0) throw new Error("No chat .json files were found in that zip.");
   const lists = [];
@@ -872,7 +876,7 @@ async function importChats(file) {
   if (busyGuard()) return;
   if (!file) return;
   const isZip = file.name.toLowerCase().endsWith(".zip") || file.type === "application/zip";
-  if (!isZip && file.size > MAX_IMPORT_BYTES) return chatDataStatus("That file is too large to import (20 MB limit).", true);
+  if (!isZip && file.size > MAX_IMPORT_BYTES) return chatDataStatus("That file is too large to import (200 MB limit).", true);
   let list;
   try {
     list = await readChatLists(file);

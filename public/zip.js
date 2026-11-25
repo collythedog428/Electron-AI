@@ -1,6 +1,6 @@
 // A small zip reader for chat imports. It reads stored and deflated entries using the
 // browser's built-in DecompressionStream, so no extra library is needed.
-const ZIP_MAX_BYTES = 50 * 1024 * 1024; // total unpacked size allowed
+const ZIP_MAX_BYTES = 200 * 1024 * 1024; // total unpacked size allowed (ChatGPT exports can be large)
 const ZIP_MAX_ENTRIES = 500;
 
 // Returns [{ name, text }] for every .json file in the zip. Other files are ignored.
