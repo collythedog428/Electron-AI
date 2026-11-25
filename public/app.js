@@ -1123,7 +1123,8 @@ $("effort").addEventListener("change", (e) => localStorage.setItem("effort", e.t
   // Copy Spark's drawing into the Settings preview.
   const previewEl = $("outfit-preview");
   if (previewEl) {
-    previewEl.innerHTML = $("mascot").querySelector("svg").outerHTML;
+    // Own gradient id: the chat header's copy is hidden while Settings is open, and hidden gradients don't draw.
+    previewEl.innerHTML = $("mascot").querySelector("svg").outerHTML.replaceAll("mascot-body", "preview-body");
     // Give the preview headroom so hats above the head aren't cut off.
     previewEl.querySelector("svg").setAttribute("viewBox", "-14 -18 148 188");
   }
