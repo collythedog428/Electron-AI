@@ -86,7 +86,7 @@ test("when the user denies an action, it does not run", async () => {
   await new Promise((r) => setTimeout(r, 20));
   const card = events.find((e) => e.type === "approval");
   assert.ok(card, "an approval should be requested");
-  assert.equal(approvals.answer(card.id, false), true);
+  assert.equal(approvals.answer(card.toolId, false), true);
   await run;
   assert.equal(ran, false);
   assert.ok(events.some((e) => e.type === "tool" && e.status === "declined"));
@@ -110,7 +110,7 @@ test("approving lets the action run", async () => {
     askFirst: true,
   });
   await new Promise((r) => setTimeout(r, 20));
-  approvals.answer(events.find((e) => e.type === "approval").id, true);
+  approvals.answer(events.find((e) => e.type === "approval").toolId, true);
   await run;
   assert.equal(ran, true);
 });
@@ -167,4 +167,29 @@ test("coordinates must be whole numbers in range", () => {
 test("approval descriptions are plain and short", () => {
   assert.equal(describeToolCall("read_file", { path: "C:\\x.txt" }), "Read the file C:\\x.txt");
   assert.equal(describeToolCall("type_text", { text: "hello" }), 'Type "hello"');
+});
+
+test("tool and approval events do not use the field name 'id' (the chat request ID owns it)", async () => {
+  const approvals = createApprovals();
+  const client = scriptedClient([
+    { stop_reason: "tool_use", content: [toolUse("t5", "read_file", { path: "x" })] },
+    endTurn("ok"),
+  ]);
+  const events = [];
+  const run = runWithTools({
+    client,
+    params: { model: "m", max_tokens: 100, messages: [{ role: "user", content: "read" }] },
+    powers: { files_read: true, files_write: false, screen: false, control: false, askFirst: true },
+    execute: async () => ({ text: "" }),
+    emit: (e) => events.push(e),
+    approvals,
+    askFirst: true,
+  });
+  await new Promise((r) => setTimeout(r, 20));
+  const approval = events.find((e) => e.type === "approval");
+  assert.equal("id" in approval, false);
+  assert.ok(approval.toolId);
+  approvals.answer(approval.toolId, true);
+  await run;
+  for (const e of events.filter((e) => e.type === "tool")) assert.equal("id" in e, false);
 });

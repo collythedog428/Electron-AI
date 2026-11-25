@@ -741,11 +741,11 @@ const TOOL_ICONS = { running: "⏳", done: "✅", failed: "⚠️", declined: "�
 
 // One line per tool step, updated in place as it runs.
 function toolRow(wrap, evt) {
-  let row = wrap.querySelector(`[data-tool="${CSS.escape(evt.id)}"]`);
+  let row = wrap.querySelector(`[data-tool="${CSS.escape(evt.toolId)}"]`);
   if (!row) {
     row = document.createElement("div");
     row.className = "tool-row";
-    row.dataset.tool = evt.id;
+    row.dataset.tool = evt.toolId;
     wrap.insertBefore(row, wrap.querySelector(".body"));
   }
   row.textContent = `${TOOL_ICONS[evt.status] ?? "🛠️"} ${evt.description}`;
@@ -756,7 +756,7 @@ function toolRow(wrap, evt) {
 function approvalCard(wrap, evt) {
   const card = document.createElement("div");
   card.className = "approval";
-  card.dataset.approval = evt.id;
+  card.dataset.approval = evt.toolId;
   const text = document.createElement("div");
   text.className = "approval-text";
   text.textContent = `Spark wants to: ${evt.description}`;
@@ -773,7 +773,7 @@ function approvalCard(wrap, evt) {
     deny.disabled = allow.disabled = true;
     text.textContent = `${ok ? "Allowed" : "Denied"}: ${evt.description}`;
     try {
-      await window.claudeHub.approve(evt.id, ok);
+      await window.claudeHub.approve(evt.toolId, ok);
     } catch (err) {
       flash(err.message, true);
     }
