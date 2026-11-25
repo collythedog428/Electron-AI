@@ -330,6 +330,19 @@
   </div>
 </div>
 
+<!-- Confirmation dialog (replaces the browser's plain box) -->
+<div id="confirm" class="modal" hidden role="alertdialog" aria-modal="true" aria-labelledby="confirm-title" aria-describedby="confirm-message">
+  <div class="modal-card">
+    <div id="confirm-icon" class="modal-icon" aria-hidden="true">⚠️</div>
+    <h2 id="confirm-title"></h2>
+    <p id="confirm-message" class="hint"></p>
+    <div class="modal-actions">
+      <button id="confirm-cancel" class="ghost" type="button">Keep it</button>
+      <button id="confirm-ok" type="button">OK</button>
+    </div>
+  </div>
+</div>
+
 <!-- First-run setup -->
 <div id="setup" class="setup" hidden role="dialog" aria-modal="true" aria-labelledby="setup-title">
   <form id="setup-form" class="setup-card" novalidate>

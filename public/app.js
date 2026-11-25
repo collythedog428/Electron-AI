@@ -382,11 +382,48 @@ function selectChat(id) {
   showView("chat");
 }
 
-function deleteChat(id) {
+// In-app confirmation. Resolves true for OK, false for Keep it or Escape.
+function askConfirm({ title, message, confirmText = "OK", icon = "⚠️", danger = false }) {
+  return new Promise((resolve) => {
+    $("confirm-title").textContent = title;
+    $("confirm-message").textContent = message;
+    $("confirm-icon").textContent = icon;
+    const ok = $("confirm-ok");
+    ok.textContent = confirmText;
+    ok.classList.toggle("danger-solid", danger);
+    const modal = $("confirm");
+    const finish = (value) => {
+      modal.hidden = true;
+      ok.onclick = null;
+      $("confirm-cancel").onclick = null;
+      document.removeEventListener("keydown", onKey);
+      resolve(value);
+    };
+    const onKey = (e) => {
+      if (e.key === "Escape") finish(false);
+    };
+    ok.onclick = () => finish(true);
+    $("confirm-cancel").onclick = () => finish(false);
+    document.addEventListener("keydown", onKey);
+    modal.hidden = false;
+    $("confirm-cancel").focus(); // the safe choice is the default
+  });
+}
+
+async function deleteChat(id) {
   if (busyGuard()) return;
   const chat = chats.find((c) => c.id === id);
   if (!chat) return;
-  if (prefs.confirmDelete && !confirm(`Delete "${chat.title}"? This cannot be undone.`)) return;
+  if (prefs.confirmDelete) {
+    const sure = await askConfirm({
+      icon: "🗑️",
+      title: `Delete "${chat.title}"?`,
+      message: "This removes the whole conversation from this PC, including every message in it. It can't be undone.",
+      confirmText: "Delete chat",
+      danger: true,
+    });
+    if (!sure) return;
+  }
   Mascot.set("sad", { text: "Bye, chat!", hold: 2500 });
   chats = chats.filter((c) => c.id !== id);
   if (activeId === id) activeId = chats[0]?.id ?? null;
@@ -1174,7 +1211,14 @@ $("key-form").addEventListener("submit", async (e) => {
 });
 
 $("key-delete").addEventListener("click", async () => {
-  if (!confirm("Remove the stored API key from this computer?")) return;
+  const sure = await askConfirm({
+    icon: "🔑",
+    title: "Remove your API key?",
+    message: "The key is deleted from this computer. You'll need to paste it again to chat.",
+    confirmText: "Remove key",
+    danger: true,
+  });
+  if (!sure) return;
   try {
     await backend.deleteKey();
     await refreshStatus();
