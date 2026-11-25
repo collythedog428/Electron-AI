@@ -301,11 +301,11 @@
 
           <article class="card">
             <h3><span class="icon" aria-hidden="true">💾</span>Chat data</h3>
-            <p class="hint">Export your chats to a JSON file to back them up or move them to another PC. Importing adds chats to the list and never replaces existing ones.</p>
+            <p class="hint">Export your chats to a JSON file to back them up or move them to another PC. Import a JSON file or a zip of them. Importing adds chats to the list and never replaces existing ones.</p>
             <div class="row">
               <button id="export-chats" type="button">Export chats</button>
               <button id="import-chats" class="ghost" type="button">Import chats…</button>
-              <input id="import-file" type="file" accept="application/json,.json" hidden>
+              <input id="import-file" type="file" accept="application/json,.json,application/zip,.zip" hidden>
             </div>
             <p id="chat-data-status" class="hint"></p>
           </article>
@@ -367,6 +367,7 @@
   </form>
 </div>
 
+<script src="zip.js" defer></script>
 <script src="mascot.js" defer></script>
 <script src="app.js" defer></script>
 </body>

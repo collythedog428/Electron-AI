@@ -836,19 +836,48 @@ function sanitiseImportedChat(raw) {
   return { id: crypto.randomUUID(), title, messages };
 }
 
+// Reads one chat export (JSON) and returns its list of chats. Throws a readable error otherwise.
+function chatListFromJson(text) {
+  let data;
+  try {
+    data = JSON.parse(text);
+  } catch {
+    throw new Error("That file is not valid JSON, so nothing was imported.");
+  }
+  const list = Array.isArray(data) ? data : data?.format === EXPORT_FORMAT ? data.chats : null;
+  if (!Array.isArray(list)) throw new Error("That file is not an Electron chat export, so nothing was imported.");
+  return list;
+}
+
+// Accepts a single .json export, or a .zip containing one or more of them.
+async function readChatLists(file) {
+  const isZip = file.name.toLowerCase().endsWith(".zip") || file.type === "application/zip";
+  if (!isZip) return chatListFromJson(await file.text());
+  if (file.size > ZIP_MAX_BYTES) throw new Error("That zip is too large to import (50 MB limit).");
+  const entries = await readZipJsonFiles(new Uint8Array(await file.arrayBuffer()));
+  if (entries.length === 0) throw new Error("No chat .json files were found in that zip.");
+  const lists = [];
+  for (const entry of entries) {
+    try {
+      lists.push(...chatListFromJson(entry.text));
+    } catch {
+      // A bad file inside the zip is skipped; the others still import.
+    }
+  }
+  if (lists.length === 0) throw new Error("None of the .json files in that zip are chat exports.");
+  return lists;
+}
+
 async function importChats(file) {
   if (busyGuard()) return;
   if (!file) return;
-  if (file.size > MAX_IMPORT_BYTES) return chatDataStatus("That file is too large to import (20 MB limit).", true);
-  let data;
+  const isZip = file.name.toLowerCase().endsWith(".zip") || file.type === "application/zip";
+  if (!isZip && file.size > MAX_IMPORT_BYTES) return chatDataStatus("That file is too large to import (20 MB limit).", true);
+  let list;
   try {
-    data = JSON.parse(await file.text());
-  } catch {
-    return chatDataStatus("That file is not valid JSON, so nothing was imported.", true);
-  }
-  const list = Array.isArray(data) ? data : data?.format === EXPORT_FORMAT ? data.chats : null;
-  if (!Array.isArray(list)) {
-    return chatDataStatus("That file is not an Electron chat export, so nothing was imported.", true);
+    list = await readChatLists(file);
+  } catch (err) {
+    return chatDataStatus(err.message, true);
   }
   const imported = list.slice(0, MAX_IMPORT_CHATS).map(sanitiseImportedChat).filter(Boolean);
   const skipped = list.length - imported.length;
