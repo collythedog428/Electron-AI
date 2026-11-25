@@ -673,6 +673,28 @@ button.danger:hover:not(:disabled) { background: rgba(255, 92, 108, 0.1); box-sh
   box-shadow: none;
 }
 
+/* Sidebar minimises to an icon strip while the Voice console is open */
+.app { transition: grid-template-columns 0.35s var(--ease); }
+.sidebar { overflow: hidden; }
+.app.sidebar-collapsed { grid-template-columns: 68px 1fr; }
+.sidebar .lbl, .sidebar .chat-list-label, .sidebar .chat-list, .sidebar .brand-name,
+.sidebar .user-name, .sidebar .me { transition: opacity 0.2s var(--ease); }
+.app.sidebar-collapsed .lbl,
+.app.sidebar-collapsed .chat-list-label,
+.app.sidebar-collapsed .chat-list,
+.app.sidebar-collapsed .brand-name,
+.app.sidebar-collapsed .user-name,
+.app.sidebar-collapsed .me { display: none; }
+.app.sidebar-collapsed .sidebar { padding: 18px 10px 14px; }
+.app.sidebar-collapsed .brand-row { justify-content: center; padding: 2px 0 8px; }
+.app.sidebar-collapsed .new-chat { font-size: 0; padding: 10px 0; text-align: center; }
+.app.sidebar-collapsed .new-chat::before { content: "+"; font-size: 18px; font-weight: 700; }
+.app.sidebar-collapsed .mode-switch { grid-template-columns: 1fr; }
+.app.sidebar-collapsed .mode-btn { padding: 8px 0; }
+.app.sidebar-collapsed .sidebar-foot { flex-direction: column; gap: 10px; padding: 10px 0 2px; justify-content: center; }
+.app.sidebar-collapsed .sidebar-foot .me { display: flex; }
+.app.sidebar-collapsed .sidebar-foot .me .user-name { display: none; }
+
 /* Voice console */
 .voice-console {
   flex: 1;

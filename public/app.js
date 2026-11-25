@@ -1054,6 +1054,8 @@ document.querySelectorAll(".mode-btn").forEach((b) => b.addEventListener("click"
 function showView(name) {
   document.querySelectorAll(".view").forEach((v) => v.classList.toggle("active", v.id === `view-${name}`));
   $("open-settings").classList.toggle("active", name === "settings");
+  // The sidebar folds to an icon strip in Voice mode, so the console has room.
+  document.querySelector(".app").classList.toggle("sidebar-collapsed", name === "voice");
   document.querySelectorAll(".mode-btn").forEach((b) => {
     const on = b.dataset.mode === name;
     b.classList.toggle("active", on);
