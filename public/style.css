@@ -640,6 +640,18 @@ button.danger:hover:not(:disabled) { background: rgba(255, 92, 108, 0.1); box-sh
   filter: drop-shadow(0 8px 14px rgba(124, 92, 255, 0.35));
 }
 
+/* Playful moves */
+.mascot[data-mood="dance"] .m-body { animation: wiggle 0.9s ease-in-out infinite; }
+.mascot[data-mood="dance"] .m-arm-l { animation: juggle-l 0.45s ease-in-out infinite; }
+.mascot[data-mood="dance"] .m-arm-r { animation: juggle-r 0.45s ease-in-out infinite; }
+.mascot[data-mood="bounce"] .m-body { animation: hop 0.5s ease-in-out infinite; }
+.mascot[data-mood="wink"] .m-eyes .m-eye:last-child { animation: none; transform: scaleY(0.1); }
+
+/* Live preview in Settings */
+.outfit-preview { display: flex; justify-content: center; padding: 4px 0 8px; }
+.preview-mascot { width: 110px; height: 146px; cursor: default; }
+.preview-mascot[data-mood="idle"] { cursor: default; }
+
 /* Spark's outfit (set from Settings) */
 .m-torso { fill: var(--shirt, #7c5cff); }
 .hat, .glasses { opacity: 0; transition: opacity 0.3s; }

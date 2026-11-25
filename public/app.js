@@ -151,6 +151,11 @@ function applyPrefs() {
   const outfit = { ...DEFAULT_PREFS.outfit, ...(prefs.outfit || {}) };
   $("mascot").dataset.hat = outfit.hat;
   $("mascot").dataset.glasses = outfit.glasses ? "on" : "off";
+  const preview = $("outfit-preview");
+  if (preview) {
+    preview.dataset.hat = outfit.hat;
+    preview.dataset.glasses = outfit.glasses ? "on" : "off";
+  }
   style.setProperty("--shirt", (SHIRTS[outfit.shirt] ?? SHIRTS.violet).color);
 
   input.placeholder = prefs.enterSends
@@ -1008,6 +1013,13 @@ function setOutfit(changes) {
   savePrefs();
   applyPrefs();
   syncPrefControls();
+  // Show off the new look in the preview.
+  const preview = $("outfit-preview");
+  if (preview) {
+    preview.dataset.mood = "bounce";
+    clearTimeout(setOutfit.timer);
+    setOutfit.timer = setTimeout(() => (preview.dataset.mood = "idle"), 1500);
+  }
 }
 $("reset-prefs").addEventListener("click", () => {
   prefs = { ...DEFAULT_PREFS };
@@ -1108,6 +1120,9 @@ $("effort").addEventListener("change", (e) => localStorage.setItem("effort", e.t
 
 // ---------- boot ----------
 (async () => {
+  // Copy Spark's drawing into the Settings preview.
+  const previewEl = $("outfit-preview");
+  if (previewEl) previewEl.innerHTML = $("mascot").querySelector("svg").outerHTML;
   applyPrefs();
   syncPrefControls();
   renderProfile();

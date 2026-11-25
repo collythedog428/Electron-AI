@@ -3,15 +3,15 @@
 const Mascot = (() => {
   const root = document.getElementById("mascot");
   const LOADING_TASKS = ["pace", "juggle", "stretch", "read", "coffee", "paint", "hop", "wiggle"];
+  const ANTICS = ["wink", "dance", "bounce", "wave"];
   let moodTimer = null;
   let sleepTimer = null;
   let taskTimer = null;
+  let anticTimer = null;
   const SLEEP_AFTER_MS = 90 * 1000;
 
-  const pickTask = (exclude) => {
-    const pool = LOADING_TASKS.filter((t) => t !== exclude);
-    return pool[Math.floor(Math.random() * pool.length)];
-  };
+  const pick = (list) => list[Math.floor(Math.random() * list.length)];
+  const pickTask = (exclude) => pick(LOADING_TASKS.filter((t) => t !== exclude));
 
   // While loading, Spark picks a random activity and changes to another every 5 to 9 seconds.
   function startLoadingTasks() {
@@ -48,12 +48,26 @@ const Mascot = (() => {
     }, SLEEP_AFTER_MS);
   }
 
-  // Click: a little wave.
-  root?.addEventListener("click", () => setMood("wave", { hold: 2500 }));
+  // Playful moves: a random one now and then while Spark is idle, and one on each click.
+  function playAntic() {
+    const current = root?.dataset.mood;
+    if (current !== "idle" && current !== "sleepy" && current !== undefined) return;
+    setMood(pick(ANTICS), { hold: 1800 });
+  }
+
+  function scheduleAntic() {
+    clearTimeout(anticTimer);
+    anticTimer = setTimeout(() => {
+      if (root?.dataset.mood === "idle") playAntic();
+      scheduleAntic();
+    }, 14000 + Math.random() * 16000);
+  }
+
+  root?.addEventListener("click", playAntic);
 
   resetSleepTimer();
+  scheduleAntic();
   return {
-    // The text argument is accepted for compatibility but no longer shown.
     set: (mood, options = {}) => setMood(mood, { hold: options.hold ?? 0 }),
     say: (_text, mood = "happy") => setMood(mood, { hold: 3500 }),
   };
