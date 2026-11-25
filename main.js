@@ -1,11 +1,12 @@
 // Electron main process: owns the API key, talks to Anthropic, and opens the window.
-import { app, BrowserWindow, ipcMain, safeStorage } from "electron";
+import { app, BrowserWindow, desktopCapturer, ipcMain, safeStorage } from "electron";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { Hub, HttpError } from "./lib/hub.js";
 import { KeyStore } from "./lib/key-store.js";
 import { startLocalServer } from "./lib/local-server.js";
 import { SpeechService } from "./lib/speech.js";
+import { createToolExecutor } from "./lib/computer.js";
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 const PUBLIC_DIR = path.join(HERE, "public");
@@ -25,7 +26,15 @@ const hub = new Hub({
     crypto: safeStorage,
   }),
   profileFile: path.join(app.getPath("userData"), "profile.json"),
+  // Spark's tools (files, screen, mouse and keyboard). Only the desktop window gets these.
+  computer: { execute: createToolExecutor({ captureScreen }) },
 });
+
+async function captureScreen() {
+  const sources = await desktopCapturer.getSources({ types: ["screen"], thumbnailSize: { width: 1920, height: 1080 } });
+  if (!sources.length) throw new Error("No screen was found.");
+  return sources[0].thumbnail.toPNG();
+}
 
 const speech = new SpeechService({ dir: path.join(app.getPath("userData"), "whisper") });
 
@@ -53,6 +62,7 @@ handle("hub:status", () => hub.status());
 handle("hub:saveKey", (_e, apiKey) => hub.saveKey(apiKey));
 handle("hub:deleteKey", () => hub.deleteKey());
 handle("hub:setName", (_e, name) => hub.setName(name));
+handle("hub:approve", (_e, id, allow) => hub.approve(id, allow));
 handle("hub:models", (_e, force) => hub.models(force === true));
 handle("app:localAccess", () => localAccess);
 

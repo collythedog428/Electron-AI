@@ -108,6 +108,7 @@ const DEFAULT_PREFS = {
   confirmDelete: true,
   showMascot: true,
   speakReplies: true,
+  powers: { files_read: false, files_write: false, screen: false, control: false, askFirst: true },
   outfit: { hat: "none", shirt: "violet", glasses: false },
 };
 const SHIRTS = {
@@ -196,6 +197,15 @@ function syncPrefControls() {
   $("confirm-delete").checked = prefs.confirmDelete;
   $("show-mascot").checked = prefs.showMascot;
   $("speak-replies").checked = prefs.speakReplies;
+  const powers = { ...DEFAULT_PREFS.powers, ...(prefs.powers || {}) };
+  $("power-files-read").checked = powers.files_read;
+  $("power-files-write").checked = powers.files_write;
+  $("power-screen").checked = powers.screen;
+  $("power-control").checked = powers.control;
+  $("power-ask").checked = powers.askFirst;
+  const desktop = Boolean(window.claudeHub);
+  for (const id of ["power-files-read", "power-files-write", "power-screen", "power-control", "power-ask"]) $(id).disabled = !desktop;
+  $("powers-note").textContent = desktop ? "" : "These powers only work in the desktop app.";
   const outfit = { ...DEFAULT_PREFS.outfit, ...(prefs.outfit || {}) };
   $("spark-hat").value = outfit.hat;
   $("spark-glasses").checked = outfit.glasses;
@@ -657,6 +667,7 @@ async function send() {
         model: modelSel.value,
         system: $("system").value,
         thinking: $("thinking").checked,
+        powers: window.claudeHub ? { ...DEFAULT_PREFS.powers, ...prefs.powers } : undefined,
         effort: $("effort").value || undefined,
         messages: chat.messages.map(apiMessage),
       },
@@ -672,6 +683,10 @@ async function send() {
           pre.textContent += evt.text;
         } else if (evt.type === "done") {
           stopReason = evt.stop_reason;
+        } else if (evt.type === "tool") {
+          toolRow(assistant.wrap, evt);
+        } else if (evt.type === "approval") {
+          approvalCard(assistant.wrap, evt);
         } else if (evt.type === "stopped") {
           stopped = true;
         } else if (evt.type === "error") {
@@ -719,6 +734,55 @@ async function send() {
   controller = null;
   setBusy(false);
   input.focus();
+}
+
+// ---------- Spark's tool steps and approvals ----------
+const TOOL_ICONS = { running: "⏳", done: "✅", failed: "⚠️", declined: "🚫", blocked: "⛔" };
+
+// One line per tool step, updated in place as it runs.
+function toolRow(wrap, evt) {
+  let row = wrap.querySelector(`[data-tool="${CSS.escape(evt.id)}"]`);
+  if (!row) {
+    row = document.createElement("div");
+    row.className = "tool-row";
+    row.dataset.tool = evt.id;
+    wrap.insertBefore(row, wrap.querySelector(".body"));
+  }
+  row.textContent = `${TOOL_ICONS[evt.status] ?? "🛠️"} ${evt.description}`;
+  row.classList.toggle("problem", evt.status === "failed" || evt.status === "blocked" || evt.status === "declined");
+}
+
+// Asks the user to Allow or Deny one action before Spark runs it.
+function approvalCard(wrap, evt) {
+  const card = document.createElement("div");
+  card.className = "approval";
+  card.dataset.approval = evt.id;
+  const text = document.createElement("div");
+  text.className = "approval-text";
+  text.textContent = `Spark wants to: ${evt.description}`;
+  const actions = document.createElement("div");
+  actions.className = "approval-actions";
+  const deny = document.createElement("button");
+  deny.type = "button";
+  deny.className = "ghost";
+  deny.textContent = "Deny";
+  const allow = document.createElement("button");
+  allow.type = "button";
+  allow.textContent = "Allow";
+  const answer = async (ok) => {
+    deny.disabled = allow.disabled = true;
+    text.textContent = `${ok ? "Allowed" : "Denied"}: ${evt.description}`;
+    try {
+      await window.claudeHub.approve(evt.id, ok);
+    } catch (err) {
+      flash(err.message, true);
+    }
+  };
+  allow.addEventListener("click", () => answer(true));
+  deny.addEventListener("click", () => answer(false));
+  actions.append(deny, allow);
+  card.append(text, actions);
+  wrap.insertBefore(card, wrap.querySelector(".body"));
 }
 
 // ---------- first-run setup ----------
@@ -1154,6 +1218,15 @@ $("enter-sends").addEventListener("change", (e) => setPref("enterSends", e.targe
 $("confirm-delete").addEventListener("change", (e) => setPref("confirmDelete", e.target.checked));
 $("show-mascot").addEventListener("change", (e) => setPref("showMascot", e.target.checked));
 $("speak-replies").addEventListener("change", (e) => setPref("speakReplies", e.target.checked));
+const POWER_INPUTS = { "power-files-read": "files_read", "power-files-write": "files_write", "power-screen": "screen", "power-control": "control", "power-ask": "askFirst" };
+for (const [id, key] of Object.entries(POWER_INPUTS)) {
+  $(id).addEventListener("change", (e) => setPowers({ [key]: e.target.checked }));
+}
+function setPowers(changes) {
+  prefs.powers = { ...DEFAULT_PREFS.powers, ...(prefs.powers || {}), ...changes };
+  savePrefs();
+  syncPrefControls();
+}
 $("spark-hat").addEventListener("change", (e) => setOutfit({ hat: e.target.value }));
 $("spark-glasses").addEventListener("change", (e) => setOutfit({ glasses: e.target.checked }));
 function setOutfit(changes) {

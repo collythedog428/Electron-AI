@@ -828,6 +828,30 @@ button.danger:hover:not(:disabled) { background: rgba(255, 92, 108, 0.1); box-sh
 .preview-mascot { width: 118px; height: 150px; cursor: default; }
 .preview-mascot[data-mood="idle"] { cursor: default; }
 
+/* Spark's tool steps and approval cards */
+.tool-row {
+  margin: 0 0 6px;
+  padding: 6px 10px;
+  font-size: 12px;
+  color: var(--muted);
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  animation: fade-up 0.25s var(--ease) both;
+}
+.tool-row.problem { color: var(--error); border-color: rgba(255, 92, 108, 0.35); }
+.approval {
+  margin: 0 0 8px;
+  padding: 12px;
+  background: linear-gradient(135deg, rgba(124, 92, 255, 0.16), rgba(217, 119, 87, 0.1));
+  border: 1px solid rgba(124, 92, 255, 0.4);
+  border-radius: 14px;
+  animation: msg-in 0.3s var(--ease) both;
+}
+.approval-text { font-size: 13px; margin-bottom: 10px; }
+.approval-actions { display: flex; gap: 8px; justify-content: flex-end; }
+.approval-actions button { padding: 7px 14px; }
+
 /* Spark's outfit (set from Settings) */
 .m-torso { fill: var(--shirt, #7c5cff); }
 .hat, .glasses { opacity: 0; transition: opacity 0.3s; }

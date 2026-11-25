@@ -12,6 +12,7 @@ contextBridge.exposeInMainWorld("claudeHub", {
   saveKey: async (apiKey) => unwrap(await ipcRenderer.invoke("hub:saveKey", apiKey)),
   deleteKey: async () => unwrap(await ipcRenderer.invoke("hub:deleteKey")),
   setName: async (name) => unwrap(await ipcRenderer.invoke("hub:setName", name)),
+  approve: async (id, allow) => unwrap(await ipcRenderer.invoke("hub:approve", id, allow)),
   models: async (force) => unwrap(await ipcRenderer.invoke("hub:models", Boolean(force))),
   chat: async (id, body) => unwrap(await ipcRenderer.invoke("hub:chat", id, body)),
   cancel: (id) => ipcRenderer.send("hub:cancel", id),
