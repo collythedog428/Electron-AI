@@ -647,6 +647,66 @@ button.danger:hover:not(:disabled) { background: rgba(255, 92, 108, 0.1); box-sh
 .mascot[data-mood="bounce"] .m-body { animation: hop 0.5s ease-in-out infinite; }
 .mascot[data-mood="wink"] .m-eyes .m-eye:last-child { animation: none; transform: scaleY(0.1); }
 
+/* Mode switch */
+.mode-switch {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 4px;
+  padding: 4px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+}
+.mode-btn {
+  padding: 7px 8px;
+  font-size: 13px;
+  background: transparent;
+  color: var(--muted);
+  border: 1px solid transparent;
+  box-shadow: none;
+}
+.mode-btn:hover:not(:disabled) { color: var(--text); background: rgba(255, 255, 255, 0.05); transform: none; box-shadow: none; }
+.mode-btn.active {
+  color: var(--text);
+  background: linear-gradient(135deg, rgba(124, 92, 255, 0.3), rgba(217, 119, 87, 0.18));
+  border-color: rgba(124, 92, 255, 0.4);
+  box-shadow: none;
+}
+
+/* Voice console */
+.voice-console {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  padding: 24px 26px 30px;
+  text-align: center;
+}
+.mascot.voice-spark { width: 200px; height: 266px; cursor: pointer; }
+.voice-status { margin: 0; font-size: 18px; font-weight: 700; letter-spacing: -0.01em; }
+.voice-caption {
+  max-width: 620px;
+  max-height: 180px;
+  overflow-y: auto;
+  margin: 0;
+  color: var(--muted);
+  font-size: 15px;
+  line-height: 1.6;
+  white-space: pre-wrap;
+}
+.voice-talk {
+  min-width: 200px;
+  padding: 14px 24px;
+  font-size: 16px;
+  border-radius: 999px;
+}
+.voice-talk.listening {
+  background: linear-gradient(135deg, #ff5c6c, #ff8a95);
+  animation: mic-pulse 1.2s ease-in-out infinite;
+}
+
 /* Live preview in Settings */
 .outfit-preview { display: flex; justify-content: center; padding: 4px 0 8px; }
 .preview-mascot { width: 118px; height: 150px; cursor: default; }

@@ -107,6 +107,7 @@ const DEFAULT_PREFS = {
   enterSends: true,
   confirmDelete: true,
   showMascot: true,
+  speakReplies: true,
   outfit: { hat: "none", shirt: "violet", glasses: false },
 };
 const SHIRTS = {
@@ -151,10 +152,11 @@ function applyPrefs() {
   const outfit = { ...DEFAULT_PREFS.outfit, ...(prefs.outfit || {}) };
   $("mascot").dataset.hat = outfit.hat;
   $("mascot").dataset.glasses = outfit.glasses ? "on" : "off";
-  const preview = $("outfit-preview");
-  if (preview) {
-    preview.dataset.hat = outfit.hat;
-    preview.dataset.glasses = outfit.glasses ? "on" : "off";
+  for (const id of ["outfit-preview", "voice-spark"]) {
+    const el = $(id);
+    if (!el) continue;
+    el.dataset.hat = outfit.hat;
+    el.dataset.glasses = outfit.glasses ? "on" : "off";
   }
   style.setProperty("--shirt", (SHIRTS[outfit.shirt] ?? SHIRTS.violet).color);
 
@@ -193,6 +195,7 @@ function syncPrefControls() {
   $("enter-sends").checked = prefs.enterSends;
   $("confirm-delete").checked = prefs.confirmDelete;
   $("show-mascot").checked = prefs.showMascot;
+  $("speak-replies").checked = prefs.speakReplies;
   const outfit = { ...DEFAULT_PREFS.outfit, ...(prefs.outfit || {}) };
   $("spark-hat").value = outfit.hat;
   $("spark-glasses").checked = outfit.glasses;
@@ -596,6 +599,7 @@ async function send() {
   setBusy(true);
   flash("Streaming…");
   Mascot.set("thinking");
+  if (voiceActive()) setVoiceStatus("Thinking…");
   let answer = "";
   let stopReason = null;
   let pre = null;
@@ -624,6 +628,7 @@ async function send() {
           if (!answer) Mascot.set("typing", { line: false });
           answer += evt.text;
           assistant.body.textContent = answer;
+          if (voiceActive()) $("voice-caption").textContent = answer;
           logEl.scrollTop = logEl.scrollHeight;
         } else if (evt.type === "thinking") {
           pre = pre ?? addThinking(assistant.wrap);
@@ -647,6 +652,7 @@ async function send() {
       }
       flash(err.message, true);
       Mascot.set("sad", { hold: 4000 });
+      if (voiceActive()) setVoiceStatus("Something went wrong. Tap to try again.");
       controller = null;
       setBusy(false);
       return;
@@ -659,6 +665,12 @@ async function send() {
   else failTurn();
   persist();
 
+  if (voiceActive()) {
+    const spoken = answer || (stopReason === "refusal" ? "That one got declined." : "");
+    $("voice-caption").textContent = spoken;
+    if (answer && !stopped) speakReply(answer);
+    else setVoiceStatus("Tap to talk");
+  }
   if (stopReason === "refusal") Mascot.set("sad", { hold: 4000, text: "That one got declined." });
   else if (stopped) Mascot.set("idle", { line: false });
   else Mascot.set("happy", { hold: 3500 });
@@ -895,6 +907,7 @@ async function finishRecording(chunks, mime) {
   transcribing = true;
   mic.disabled = true;
   Mascot.set("thinking", { text: "Listening back…" });
+  setVoiceStatus("Transcribing…");
   flash("Transcribing…");
   try {
     if (chunks.length === 0) throw new Error("No audio was captured.");
@@ -904,14 +917,21 @@ async function finishRecording(chunks, mime) {
     if (!text) return flash("No speech was detected.", true);
     input.value = input.value.trim() ? `${input.value.trimEnd()} ${text}` : text;
     input.focus();
-    flash("Transcribed. Check the text, then send.");
     Mascot.set("happy", { text: "Got your words!", hold: 3000 });
+    if (voiceRequested) {
+      voiceRequested = false;
+      await send(); // voice requests are sent straight away
+    } else {
+      flash("Transcribed. Check the text, then send.");
+    }
   } catch (err) {
     flash(err.message, true);
     Mascot.set("sad", { hold: 3500 });
+    voiceRequested = false;
   } finally {
     transcribing = false;
     mic.disabled = false;
+    if (!controller) setVoiceStatus("Tap to talk");
   }
 }
 
@@ -948,6 +968,7 @@ async function toggleMic() {
   rec.start();
   $("mic").classList.add("recording");
   Mascot.set("listening", { hold: 0 });
+  setVoiceStatus("Listening… tap to stop", true);
   $("mic").textContent = "⏹";
   flash("Listening… click ⏹ when you're done.");
   recordTimer = setTimeout(stopRecording, MAX_RECORDING_MS);
@@ -980,10 +1001,61 @@ $("speech-install").addEventListener("click", async () => {
   }
 });
 
+// ---------- voice console ----------
+let voiceRequested = false; // the next transcription should be sent straight away
+const voiceActive = () => $("view-voice").classList.contains("active");
+
+function setVoiceStatus(text, listening = false) {
+  $("voice-status").textContent = text;
+  $("voice-talk").classList.toggle("listening", listening);
+  $("voice-talk").textContent = listening ? "⏹ Stop" : "🎙️ Tap to talk";
+}
+
+function speakReply(text) {
+  if (!("speechSynthesis" in window) || !prefs.speakReplies || !text.trim()) {
+    setVoiceStatus("Tap to talk");
+    return;
+  }
+  speechSynthesis.cancel();
+  const utterance = new SpeechSynthesisUtterance(text.slice(0, 3000));
+  utterance.onstart = () => {
+    setVoiceStatus("Speaking… tap to stop");
+    Mascot.set("typing");
+  };
+  utterance.onend = utterance.onerror = () => {
+    setVoiceStatus("Tap to talk");
+    Mascot.set("idle");
+  };
+  speechSynthesis.speak(utterance);
+}
+
+$("voice-talk").addEventListener("click", async () => {
+  if (window.speechSynthesis?.speaking) {
+    speechSynthesis.cancel();
+    setVoiceStatus("Tap to talk");
+    Mascot.set("idle");
+    return;
+  }
+  if (recorder) return stopRecording();
+  if (!speechAvailable) return setVoiceStatus("Voice needs the desktop app.");
+  if (controller) return setVoiceStatus("Still answering. Tap to talk again soon.");
+  const s = await window.claudeHub.speechStatus();
+  if (!s.ready) return setVoiceStatus("Download the speech model in Settings first.");
+  voiceRequested = true;
+  toggleMic();
+});
+
+document.querySelectorAll(".mode-btn").forEach((b) => b.addEventListener("click", () => showView(b.dataset.mode)));
+
 // ---------- navigation ----------
 function showView(name) {
   document.querySelectorAll(".view").forEach((v) => v.classList.toggle("active", v.id === `view-${name}`));
   $("open-settings").classList.toggle("active", name === "settings");
+  document.querySelectorAll(".mode-btn").forEach((b) => {
+    const on = b.dataset.mode === name;
+    b.classList.toggle("active", on);
+    b.setAttribute("aria-selected", String(on));
+  });
   if (name === "chat") input.focus();
 }
 
@@ -1006,6 +1078,7 @@ $("motion").addEventListener("change", (e) => setPref("motion", e.target.value))
 $("enter-sends").addEventListener("change", (e) => setPref("enterSends", e.target.checked));
 $("confirm-delete").addEventListener("change", (e) => setPref("confirmDelete", e.target.checked));
 $("show-mascot").addEventListener("change", (e) => setPref("showMascot", e.target.checked));
+$("speak-replies").addEventListener("change", (e) => setPref("speakReplies", e.target.checked));
 $("spark-hat").addEventListener("change", (e) => setOutfit({ hat: e.target.value }));
 $("spark-glasses").addEventListener("change", (e) => setOutfit({ glasses: e.target.checked }));
 function setOutfit(changes) {
@@ -1120,6 +1193,9 @@ $("effort").addEventListener("change", (e) => localStorage.setItem("effort", e.t
 
 // ---------- boot ----------
 (async () => {
+  // Copy Spark's drawing into the Voice console (its own gradient id, as with the preview).
+  const voiceSparkEl = $("voice-spark");
+  if (voiceSparkEl) voiceSparkEl.innerHTML = $("mascot").querySelector("svg").outerHTML.replaceAll("mascot-body", "voice-body");
   // Copy Spark's drawing into the Settings preview.
   const previewEl = $("outfit-preview");
   if (previewEl) {

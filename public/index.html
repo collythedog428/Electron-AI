@@ -14,6 +14,10 @@
       <span class="brand-mark" aria-hidden="true">⚡</span>
       <span class="brand-name">Electron</span>
     </div>
+    <div class="mode-switch" role="tablist" aria-label="Mode">
+      <button class="mode-btn active" data-mode="chat" type="button" role="tab" aria-selected="true">💬 Chat</button>
+      <button class="mode-btn" data-mode="voice" type="button" role="tab" aria-selected="false">🎙️ Voice</button>
+    </div>
     <button id="new-chat" class="new-chat" type="button">+ New chat</button>
     <div class="chat-list-label">Chats</div>
     <ul id="chat-list" class="chat-list" aria-label="Chats"></ul>
@@ -134,6 +138,17 @@
       </div>
     </section>
 
+    <!-- Voice view: a console for talking to Spark -->
+    <section id="view-voice" class="view">
+      <div class="voice-console">
+        <div id="voice-spark" class="mascot voice-spark" data-mood="idle" data-hat="none" data-glasses="off" aria-hidden="true"></div>
+        <p id="voice-status" class="voice-status" aria-live="polite">Tap to talk</p>
+        <p id="voice-caption" class="voice-caption"></p>
+        <button id="voice-talk" class="voice-talk" type="button">🎙️ Tap to talk</button>
+        <p id="voice-hint" class="hint">Your words are sent to Claude and the reply is read aloud. Turn reading off in App behaviour.</p>
+      </div>
+    </section>
+
     <!-- Settings view -->
     <section id="view-settings" class="view">
       <div class="settings-body">
@@ -245,6 +260,7 @@
             <label class="check"><input type="checkbox" id="enter-sends"> Press Enter to send (Shift+Enter for a new line)</label>
             <label class="check"><input type="checkbox" id="confirm-delete"> Ask before deleting a chat</label>
             <label class="check"><input type="checkbox" id="show-mascot"> Show Spark, the helper, in the chat header</label>
+            <label class="check"><input type="checkbox" id="speak-replies"> Read Spark's replies aloud in Voice mode</label>
             <div class="row">
               <button id="reset-prefs" class="ghost" type="button">Reset appearance and behaviour</button>
             </div>
