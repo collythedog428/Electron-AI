@@ -1025,14 +1025,6 @@ html[data-motion="reduced"] *, html[data-motion="reduced"] *::before, html[data-
 }
 
 /* ---------- Appearance & behaviour cards ---------- */
-.pref-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-}
-.pref-row > span { font-size: 13px; color: var(--text); }
-.pref-row select { width: auto; min-width: 150px; }
 .swatches { display: flex; gap: 8px; flex-wrap: wrap; }
 .swatch {
   width: 28px;
@@ -1045,4 +1037,3 @@ html[data-motion="reduced"] *, html[data-motion="reduced"] *::before, html[data-
 }
 .swatch:hover:not(:disabled) { transform: scale(1.08); box-shadow: none; filter: none; }
 .swatch[aria-pressed="true"] { border-color: #fff; box-shadow: 0 0 0 3px color-mix(in srgb, var(--sw) 45%, transparent); }
-.toggle-line { display: flex; align-items: center; justify-content: space-between; font-size: 13px; color: var(--text); gap: 12px; }
