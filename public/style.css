@@ -691,7 +691,7 @@ button.danger:hover:not(:disabled) { background: rgba(255, 92, 108, 0.1); box-sh
 .app.sidebar-collapsed .new-chat::before { content: "+"; font-size: 18px; font-weight: 700; }
 .app.sidebar-collapsed .mode-switch { grid-template-columns: 1fr; }
 .app.sidebar-collapsed .mode-btn { padding: 8px 0; }
-.app.sidebar-collapsed .sidebar-foot { flex-direction: column; gap: 10px; padding: 10px 0 2px; justify-content: center; }
+.app.sidebar-collapsed .sidebar-foot { flex-direction: column; gap: 10px; padding: 10px 0 2px; justify-content: center; margin-top: auto; }
 .app.sidebar-collapsed .sidebar-foot .me { display: flex; }
 .app.sidebar-collapsed .sidebar-foot .me .user-name { display: none; }
 
